@@ -130,7 +130,16 @@ export class GameScene extends Phaser.Scene {
         .setOrigin(0, 0)
         .setDepth(2)
         .setVisible(true);
-    im.setScale(roof.w / im.width);
+    // Main deck bounds measured from source art; lower side structures are decorative.
+    const decks: Record<number, { width: number; top: number }> = {
+      1: { width: 4420, top: 130 },
+      2: { width: 1950, top: 150 },
+      3: { width: 950, top: 285 },
+      7: { width: 1465, top: 10 },
+    };
+    const deck = decks[roof.kind];
+    im.setScale(roof.w / deck.width);
+    im.y = roof.y - deck.top * im.scaleY;
     // Flat neon rooftop aligns the logical surface; railings in source artwork remain decorative.
     const ledge = (recycled?.ledge ?? this.add.rectangle(0, 0, 1, 7, 0xb464e9))
       .setPosition(roof.x, roof.y)
