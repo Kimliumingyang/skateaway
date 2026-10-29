@@ -40,3 +40,9 @@ Phaser 3 + TypeScript + Vite 实际可玩游戏。自动前进、双跳、土狼
 建议下一次优先替换角色动画、在真实 iOS/Android 上调手感与触控、试听音乐循环接缝、进行至少 15 分钟连续平衡测试，再扩充屋顶路线和金币消耗设计。
 
 运行方式：npm install → npm run dev。生产包：npm run build → npm run preview。浏览器测试见 README。
+
+## 交付与截图
+
+PR：https://github.com/Kimliumingyang/skateaway/pull/1
+
+分支：feat/playable-skateaway。尚未合并或部署公网。截图见 [游戏](screenshots/gameplay-mobile.png)、[菜单](screenshots/menu-desktop.png)、[结算](screenshots/gameover-desktop.png)。
