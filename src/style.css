@@ -30,3 +30,18 @@ canvas {
 button {
   font: inherit;
 }
+@media (orientation: portrait) {
+  #game::after {
+    content: "请横屏试玩 · Rotate your phone";
+    position: absolute;
+    top: 12%;
+    left: 0;
+    width: 100%;
+    text-align: center;
+    color: #e8d0ff;
+    font:
+      16px Arial,
+      sans-serif;
+    pointer-events: none;
+  }
+}

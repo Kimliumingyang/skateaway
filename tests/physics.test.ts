@@ -9,7 +9,13 @@ import {
   safeGap,
   speedAt,
 } from "../src/game/systems/Physics.ts";
-const roof = { x: -100, y: 860, w: 1000, kind: 1 };
+import {
+  GROUND,
+  DECKS,
+  deckScale,
+  deckWidth,
+} from "../src/game/WorldConfig.ts";
+const roof = { x: -100, y: 440, w: 1000, kind: 1 };
 test("two jumps only, landing resets and buffered jump fires", () => {
   const p = new PlayerMotion();
   p.requestJump();
@@ -25,8 +31,8 @@ test("two jumps only, landing resets and buffered jump fires", () => {
   assert.ok(p.vy > -JUMP);
   for (let i = 0; i < 300 && !p.grounded; i++) p.step(STEP, [roof]);
   assert.equal(p.jumps, 0);
-  assert.equal(p.y, 860);
-  p.y = 859;
+  assert.equal(p.y, 440);
+  p.y = 439;
   p.vy = 200;
   p.grounded = false;
   p.jumps = 2;
@@ -64,21 +70,62 @@ test("10,000 generated roofs remain conservative and have reaction room", () => 
       (JUMP + Math.sqrt(JUMP * JUMP - 2 * GRAVITY * Math.max(0, rise))) /
       GRAVITY;
     assert.ok(gap <= speed * t * 0.45 + 0.00001);
-    assert.ok(n.w / speed > 1.1);
-    assert.ok(n.y >= 800 && n.y <= 940);
+    assert.ok(n.w / speed > 0.6);
+    assert.ok(n.y >= 330 && n.y <= 470);
     p = n;
   }
   assert.equal(safeGap(310, 45, 500) > 0, true);
 });
 test("swept landing catches high downward velocity and does not land from below", () => {
   const p = new PlayerMotion();
-  p.y = 850;
+  p.y = 430;
   p.vy = 1500;
   p.grounded = false;
   p.step(0.02, [roof]);
-  assert.equal(p.y, 860);
-  p.y = 900;
+  assert.equal(p.y, 440);
+  p.y = 480;
   p.vy = -100;
   p.step(STEP, [roof]);
   assert.equal(p.grounded, false);
+});
+
+test("all building bases share one ground line and colliders match visible decks", () => {
+  const generator = new PlatformGenerator(() => 0.5);
+  let roof = { x: -100, y: 440, w: deckWidth(440, 2), kind: 2 };
+  for (let i = 0; i < 500; i++) {
+    const scale = deckScale(roof.y, roof.kind),
+      deck = DECKS[roof.kind];
+    const imageTop = GROUND - deck.height * scale;
+    assert.ok(Math.abs(imageTop + deck.height * scale - GROUND) < 1e-7);
+    assert.ok(Math.abs(imageTop + deck.top * scale - roof.y) < 1e-7);
+    assert.ok(Math.abs(deck.width * scale - roof.w) < 1e-7);
+    roof = generator.next(roof, speedAt(i * 200));
+  }
+});
+test("single jump can land on each generated next roof at every speed", () => {
+  const g = new PlatformGenerator(() => 0.8);
+  let current = { x: 0, y: 440, w: deckWidth(440, 2), kind: 2 };
+  for (let i = 0; i < 1000; i++) {
+    const speed = speedAt(i * 100),
+      next = g.next(current, speed),
+      p = new PlayerMotion();
+    p.x = current.x + current.w - 45;
+    p.y = current.y;
+    p.requestJump();
+    let landed = false;
+    for (let t = 0; t < 180; t++) {
+      const old = p.x;
+      p.x += speed * STEP;
+      p.step(STEP, [current, next]);
+      if (old + 18 <= next.x && p.x + 18 > next.x)
+        assert.ok(p.y <= next.y + 12);
+      if (p.grounded && p.x > next.x) {
+        landed = true;
+        break;
+      }
+      if (p.y > GROUND) break;
+    }
+    assert.ok(landed, `transition ${i} at speed ${speed} failed`);
+    current = next;
+  }
 });

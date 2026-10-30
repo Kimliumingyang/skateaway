@@ -5,9 +5,9 @@ export class BootScene extends Phaser.Scene {
     super("Boot");
   }
   preload() {
-    const title = label(this, 375, 610, "SKATEAWAY", 54, "#eeff45");
-    label(this, 375, 675, "Loading the rooftops…", 24);
-    const bar = this.add.rectangle(175, 730, 0, 6, 0xf225de).setOrigin(0, 0.5);
+    const title = label(this, 667, 310, "SKATEAWAY", 54, "#eeff45");
+    label(this, 667, 375, "Loading the rooftops…", 24);
+    const bar = this.add.rectangle(467, 430, 0, 6, 0xf225de).setOrigin(0, 0.5);
     this.load.on("progress", (p: number) => (bar.width = 400 * p));
     this.load.on("loaderror", (file: Phaser.Loader.File) => {
       title.setText("Asset failed to load");
@@ -15,9 +15,10 @@ export class BootScene extends Phaser.Scene {
     });
     const names = [
       "menu",
+      "character",
       "sky",
       "skyline",
-      "building1",
+      "building6",
       "building2",
       "building3",
       "building7",
@@ -48,6 +49,7 @@ export class BootScene extends Phaser.Scene {
       this.load.image(n, `${import.meta.env.BASE_URL}assets/${n}.png`);
   }
   create() {
+    this.textures.get("character").add("trimmed", 0, 150, 32, 880, 1265);
     this.scene.start("Menu");
   }
 }

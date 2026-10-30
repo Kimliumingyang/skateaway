@@ -1,5 +1,6 @@
+import { deckWidth } from "../WorldConfig.ts";
 export const GRAVITY = 1900;
-export const JUMP = 720;
+export const JUMP = 650;
 export const COYOTE = 0.1;
 export const BUFFER = 0.12;
 export const STEP = 1 / 120;
@@ -10,8 +11,8 @@ export interface Roof {
   kind: number;
 }
 export class PlayerMotion {
-  x = 185;
-  y = 860;
+  x = 240;
+  y = 440;
   vy = 0;
   jumps = 0;
   grounded = true;
@@ -63,14 +64,14 @@ export class PlayerMotion {
   }
 }
 export function speedAt(distance: number) {
-  return Math.min(490, 310 + distance / 160);
+  return Math.min(420, 290 + distance / 220);
 }
 /** Conservative single jump at worst (highest) next roof, with 100px landing reserve.
  * Every gap is less than 45% of that flight range. Double jump adds recovery margin. */
 export function safeGap(speed: number, rise: number, desired: number) {
   const discriminant = JUMP * JUMP - 2 * GRAVITY * Math.max(0, rise);
   const flight = (JUMP + Math.sqrt(Math.max(0, discriminant))) / GRAVITY;
-  return Math.max(80, Math.min(desired, speed * flight * 0.45));
+  return Math.max(60, Math.min(desired, speed * flight * 0.45));
 }
 export class PlatformGenerator {
   index = 0;
@@ -80,22 +81,21 @@ export class PlatformGenerator {
   }
   next(previous: Roof, speed: number): Roof {
     this.index++;
+    const target = [430, 365, 420, 345, 400, 455][this.index % 6];
     const y = Math.max(
-      800,
-      Math.min(940, previous.y + [0, -45, 0, 40][this.index % 4]),
+      330,
+      Math.min(
+        470,
+        previous.y + Math.max(-65, Math.min(65, target - previous.y)),
+      ),
     );
     const gap = safeGap(
       speed,
       previous.y - y,
-      85 + this.random() * 65 + Math.min(35, this.index),
+      85 + this.random() * 45 + Math.min(25, this.index),
     );
-    const kind = [2, 3, 7, 1][this.index % 4];
-    // At maximum speed even the shortest roof offers >1 second of reaction time.
-    return {
-      x: previous.x + previous.w + gap,
-      y,
-      w: kind === 1 ? 1050 : Math.max(speed * 2, 550 + this.random() * 190),
-      kind,
-    };
+    const kind = [7, 6, 3, 7, 6, 2][this.index % 6];
+    // Height determines uniform scale and width, so every source image ends on GROUND.
+    return { x: previous.x + previous.w + gap, y, w: deckWidth(y, kind), kind };
   }
 }

@@ -7,8 +7,8 @@ import { OverlayScene } from "./game/scenes/OverlayScene";
 const game = new Phaser.Game({
   type: Phaser.CANVAS,
   parent: "game",
-  width: 750,
-  height: 1334,
+  width: 1334,
+  height: 750,
   backgroundColor: "#180c2e",
   scale: { mode: Phaser.Scale.FIT, autoCenter: Phaser.Scale.CENTER_BOTH },
   render: { antialias: true, pixelArt: false },

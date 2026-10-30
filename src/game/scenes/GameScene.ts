@@ -1,5 +1,13 @@
 import Phaser from "phaser";
 import {
+  WIDTH,
+  HEIGHT,
+  GROUND,
+  PLAYER_SCREEN_X,
+  deckScale,
+  deckWidth,
+} from "../WorldConfig";
+import {
   PlayerMotion,
   PlatformGenerator,
   STEP,
@@ -60,45 +68,48 @@ export class GameScene extends Phaser.Scene {
     this.accumulator = 0;
     this.tick = 0;
     this.sky = this.add
-      .tileSprite(0, 0, 750, 1334, "sky")
+      .tileSprite(0, 0, WIDTH, HEIGHT, "sky")
       .setOrigin(0)
       .setScrollFactor(0);
     this.far = this.add
-      .tileSprite(0, 330, 750, 1000, "skyline")
+      .tileSprite(0, 170, WIDTH, 530, "skyline")
       .setOrigin(0)
       .setScrollFactor(0);
-    this.far.setTileScale(0.75);
+    this.sky.setTileScale(HEIGHT / 1334);
+    this.far.setTileScale(530 / 1336);
     this.add
-      .rectangle(375, 80, 750, 160, 0x100820, 0.85)
+      .rectangle(WIDTH / 2, GROUND + 25, WIDTH, 50, 0x120d24)
+      .setScrollFactor(0)
+      .setDepth(4);
+    this.add
+      .rectangle(WIDTH / 2, GROUND + 2, WIDTH, 4, 0xeb38d5)
+      .setScrollFactor(0)
+      .setDepth(4);
+    this.add
+      .rectangle(WIDTH / 2, 48, WIDTH, 96, 0x100820, 0.85)
       .setScrollFactor(0)
       .setDepth(20);
-    this.hud = label(this, 190, 80, "", 30, "#eeff42").setDepth(21);
-    this.best = label(this, 478, 70, `BEST ${save.data.best}`, 20).setDepth(21);
-    artButton(this, 675, 78, "btn_pause", () => this.pause(), 76).setDepth(21);
+    this.hud = label(this, 150, 48, "", 30, "#eeff42").setDepth(21);
+    this.best = label(this, 1045, 43, `BEST ${save.data.best}`, 20).setDepth(
+      21,
+    );
+    artButton(this, 1268, 47, "btn_pause", () => this.pause(), 64).setDepth(21);
     label(
       this,
-      375,
-      1224,
-      "TAP / SPACE TO JUMP · TAP AGAIN FOR DOUBLE",
-      19,
-      "#eeff42",
+      WIDTH / 2,
+      727,
+      "TAP / SPACE · JUMP    ×2 · DOUBLE JUMP    P / ESC · PAUSE",
+      18,
+      "#e6cdf8",
     ).setDepth(20);
-    label(
-      this,
-      375,
-      1272,
-      "TEMP SKATER · ORIGINAL CHARACTER FRAMES NEEDED",
-      15,
-      "#b399cc",
-    ).setDepth(20);
-    this.addRoof({ x: -100, y: 860, w: 1050, kind: 1 });
+    this.addRoof({ x: -100, y: 440, w: deckWidth(440, 2), kind: 2 });
     this.populateUntil(2500);
     this.player = new Player(this);
     const jump = () => {
       if (!this.dead) this.motion.requestJump();
     };
     const pointer = (p: Phaser.Input.Pointer) => {
-      if (p.y > 170) jump();
+      if (p.y > 100) jump();
     };
     const key = (e: KeyboardEvent) => {
       if (e.repeat) return;
@@ -130,16 +141,8 @@ export class GameScene extends Phaser.Scene {
         .setOrigin(0, 0)
         .setDepth(2)
         .setVisible(true);
-    // Main deck bounds measured from source art; lower side structures are decorative.
-    const decks: Record<number, { width: number; top: number }> = {
-      1: { width: 4420, top: 130 },
-      2: { width: 1950, top: 150 },
-      3: { width: 950, top: 285 },
-      7: { width: 1465, top: 10 },
-    };
-    const deck = decks[roof.kind];
-    im.setScale(roof.w / deck.width);
-    im.y = roof.y - deck.top * im.scaleY;
+    im.setScale(deckScale(roof.y, roof.kind));
+    im.y = GROUND - im.displayHeight;
     // Flat neon rooftop aligns the logical surface; railings in source artwork remain decorative.
     const ledge = (recycled?.ledge ?? this.add.rectangle(0, 0, 1, 7, 0xb464e9))
       .setPosition(roof.x, roof.y)
@@ -150,24 +153,27 @@ export class GameScene extends Phaser.Scene {
     this.roofs.push({ roof, art: im, ledge });
     this.roofModels.push(roof);
     if (this.generator.index > 0) {
-      if (this.generator.index % 3 !== 0) {
+      if (
+        this.generator.index % 4 !== 1 &&
+        roof.w >= speedAt(this.distance) * 1.55
+      ) {
         const types = ["cone", "box", "banana", "warning"] as const;
         this.addItem(
-          roof.x + roof.w * 0.56,
+          roof.x + roof.w * 0.52,
           roof.y,
           types[this.generator.index % 4],
         );
       }
-      for (let i = 0; i < 5; i++) {
+      for (let i = 0; i < Math.min(5, Math.floor((roof.w - 85) / 57)); i++) {
         const arc =
-          this.generator.index % 2 === 0 ? Math.sin((i / 4) * Math.PI) * 95 : 0;
+          this.generator.index % 2 === 0 ? Math.sin((i / 4) * Math.PI) * 60 : 0;
         this.addItem(roof.x + 65 + i * 57, roof.y - 70 - arc, "coin");
       }
       if (this.generator.index % 3 === 0) {
         for (let i = 0; i < 3; i++)
           this.addItem(
             roof.x - 85 + i * 40,
-            roof.y - 180 - Math.sin((i / 2) * Math.PI) * 55,
+            roof.y - 125 - Math.sin((i / 2) * Math.PI) * 35,
             "coin",
           );
       }
@@ -221,7 +227,7 @@ export class GameScene extends Phaser.Scene {
     const x = this.motion.x;
     this.player.setPosition(x, this.motion.y);
     this.player.pose(this.motion.grounded, this.motion.vy, this.tick * 1000);
-    this.cameras.main.scrollX = x - 185;
+    this.cameras.main.scrollX = x - PLAYER_SCREEN_X;
     this.sky.tilePositionX = this.distance * 0.08;
     this.far.tilePositionX = this.distance * 0.23;
     this.hud.setText(
@@ -235,6 +241,7 @@ export class GameScene extends Phaser.Scene {
     this.tick += dt;
     const speed = speedAt(this.distance);
     this.distance += speed * dt;
+    const oldX = this.motion.x;
     this.motion.x += speed * dt;
     const event = this.motion.step(dt, this.roofModels);
     if (event) {
@@ -246,7 +253,7 @@ export class GameScene extends Phaser.Scene {
       );
     }
     this.score = Math.floor(this.distance / 10) + this.coins * 25;
-    this.populateUntil(this.motion.x + 1900);
+    this.populateUntil(this.motion.x + WIDTH + 800);
     while (this.roofs[0]?.roof.x + this.roofs[0].roof.w < this.motion.x - 600) {
       const p = this.roofs.shift()!;
       this.roofModels.shift();
@@ -280,7 +287,19 @@ export class GameScene extends Phaser.Scene {
         this.items.splice(i, 1);
       }
     }
-    if (this.motion.y > 1440) this.die();
+    // A missed high roof hits its facade instead of passing through the building.
+    for (const roof of this.roofModels) {
+      if (
+        oldX + 18 <= roof.x &&
+        this.motion.x + 18 > roof.x &&
+        this.motion.y > roof.y + 12 &&
+        this.motion.y - 105 < GROUND
+      ) {
+        this.die();
+        break;
+      }
+    }
+    if (this.motion.y >= GROUND + 8) this.die();
   }
   die() {
     if (this.dead) return;
