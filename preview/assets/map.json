@@ -43,5 +43,6 @@
   "rocket": "Asset/Skateaway/障碍物:道具:建筑装饰/火箭.png",
   "gem": "Asset/Skateaway/障碍物:道具:建筑装饰/能量石.png",
   "coin": "Asset/Skateaway/障碍物:道具:建筑装饰/金币.png",
-  "music": "Asset/音乐资源/Cyan Kickflip.mp3"
+  "music": "Asset/音乐资源/Cyan Kickflip.mp3",
+  "character": "Asset/Characters/character-cutout.png"
 }
