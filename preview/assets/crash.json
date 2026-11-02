@@ -1,0 +1,35 @@
+{
+  "sourceSha256": "dbeba486941f8eed1d3a6179a3828f1deca9c10b35ff0f49741aaa8eeb13e802",
+  "sourceSize": [
+    2048,
+    1372
+  ],
+  "sourceFrameCount": 23,
+  "frameWidth": 616,
+  "frameHeight": 412,
+  "originX": 0.512451171875,
+  "originY": 0.9125364431486881,
+  "durationMs": 782.0,
+  "frames": [
+    {
+      "key": "crash",
+      "frame": 0,
+      "duration": 136.0
+    },
+    {
+      "key": "crash",
+      "frame": 1,
+      "duration": 136.0
+    },
+    {
+      "key": "crash",
+      "frame": 2,
+      "duration": 136.0
+    },
+    {
+      "key": "crash",
+      "frame": 3,
+      "duration": 374.0
+    }
+  ]
+}
