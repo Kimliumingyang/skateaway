@@ -1,10 +1,9 @@
-# SkateAway Trick + Combo preview
+# SkateAway route polish preview
 
-Source: feat/skateaway-gameplay-v2, commit cde390e0c889e1954d0fc25bbe8a11e559bd07c0 (PR #2).
+Source: feat/skateaway-route-polish, commit 658075f748e75620d85f6b164e4f9ade8ae0b6cb (PR #3).
 Build: npm run build -- --base=./
+Play: https://kimliumingyang.github.io/skateaway/preview/?v=route-polish-1
 
-Stage 1 only: airborne J / TRICK button kickflip, once per flight, safe-landing 100 × combo award capped at ×5. Existing jump/double-jump, art and generation retained.
+Opening buildings 1 → 2 → 6, then high / low alternation. Character fits 324×324 with aspect ratio retained; 324px coin spacing follows playable routes. Replay UI waits 1200ms.
 
-Play: https://kimliumingyang.github.io/skateaway/preview/?v=trick-combo-v2
-
-Runtime art is byte-identical to the previous preview and reused. Only index.html and the new gameplay bundle are published; no source PR is merged.
+Crash sequence frames are still missing and NOT integrated; current crash uses the existing procedural tilt. Runtime art unchanged. Source PRs remain unmerged.
