@@ -1,40 +1,51 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { layoutRoofItems } from "../src/game/systems/LevelItems.ts";
+import { layoutRoofItems, gapRoute } from "../src/game/systems/LevelItems.ts";
+import { COIN_SPACING, PLAYER_HEIGHT, deckWidth } from "../src/game/WorldConfig.ts";
+import { GRAVITY, JUMP, PlatformGenerator, speedAt } from "../src/game/systems/Physics.ts";
 
-test("first roof starts without coins or instant hazards", () => {
-  assert.deepEqual(layoutRoofItems({ x: -100, y: 440, w: 900, kind: 2 }, 0, 290), []);
-});
-
-test("coin trails sit above the roof and hazards stay on the surface", () => {
-  for (let index = 1; index <= 1000; index++) {
-    const roof = { x: index * 400, y: 330 + (index % 7) * 20, w: 360 + (index % 5) * 100, kind: 7 };
-    const items = layoutRoofItems(roof, index, 290 + (index % 3) * 50);
-    for (const item of items) {
-      assert.ok(Number.isFinite(item.x) && Number.isFinite(item.y));
-      if (item.type === "coin") {
-        assert.ok(item.y <= roof.y - 65, "coins should be visibly above the deck");
-      } else {
-        assert.equal(item.y, roof.y, "hazards must touch the roof");
-        assert.ok(item.x > roof.x && item.x < roof.x + roof.w);
-      }
-    }
-    assert.ok(items.filter((item) => item.type !== "coin").length <= 1);
+test("opening bridge and second roof guide the player without hazards", () => {
+  const first = { x: -100, y: 440, w: deckWidth(440, 1), kind: 1 };
+  const next = new PlatformGenerator(() => 0.5).next(first, 290);
+  for (const [roof, index] of [[first, 0], [next, 1]] as const) {
+    const items = layoutRoofItems(roof, index, 290);
+    assert.ok(items.length > 0);
+    assert.ok(items.every(item => item.type === "coin"));
   }
 });
 
-test("short roofs never get unavoidable obstacles", () => {
-  const roof = { x: 100, y: 440, w: 300, kind: 3 };
-  for (let index = 1; index <= 20; index++) {
-    const items = layoutRoofItems(roof, index, 420);
-    assert.equal(items.filter((item) => item.type !== "coin").length, 0);
+test("coin grid stays 324px apart across roofs and gaps, without duplicate clusters", () => {
+  const g = new PlatformGenerator(() => 0.5);
+  const roofs = [{ x: -100, y: 440, w: deckWidth(440, 1), kind: 1 }];
+  for (let i = 0; i < 1000; i++) roofs.push(g.next(roofs.at(-1)!, speedAt(i * 500)));
+  const coins = roofs.slice(0, -1).flatMap((roof, index) =>
+    layoutRoofItems(roof, index, 350, { previous: roofs[index - 1], next: roofs[index + 1] })
+      .filter(item => item.type === "coin"));
+  for (let i = 1; i < coins.length; i++) {
+    assert.ok(Math.abs(coins[i].x - coins[i - 1].x - COIN_SPACING) < 1e-7);
+    assert.ok(Number.isFinite(coins[i].y));
   }
 });
 
-test("gap-jump rewards use a consistent three-coin arc", () => {
-  const roof = { x: 600, y: 390, w: 700, kind: 2 };
-  const items = layoutRoofItems(roof, 3, 290);
-  const leadIn = items.filter((item) => item.type === "coin" && item.x < roof.x);
-  assert.equal(leadIn.length, 3);
-  assert.ok(leadIn[1].y < leadIn[0].y);
+test("gap coins follow the actual ballistic jump at character collection height", () => {
+  const from = { x: 0, y: 440, w: 800, kind: 2 };
+  const to = { x: 870, y: 380, w: 700, kind: 6 };
+  const route = gapRoute(from, to, 290);
+  const coin = layoutRoofItems(to, 2, 290, { previous: from }).find(item => item.type === "coin" && item.x <= route.end)!;
+  assert.ok(coin, "a sampled pickup should guide the landing arc");
+  const time = (coin.x - route.start) / 290;
+  const foot = from.y - JUMP * time + GRAVITY * time * time / 2;
+  assert.ok(Math.abs(coin.y - (foot - PLAYER_HEIGHT / 2)) < 1e-7);
+  assert.ok(coin.y < to.y - PLAYER_HEIGHT / 2);
+});
+
+test("short roofs have no hazards; obstacle coins rise along a reachable jump", () => {
+  const short = { x: 100, y: 440, w: 300, kind: 6 };
+  assert.ok(layoutRoofItems(short, 2, 420).every(item => item.type === "coin"));
+  const roof = { x: 0, y: 440, w: 1100, kind: 2 };
+  const items = layoutRoofItems(roof, 2, 290);
+  const hazard = items.find(item => item.type !== "coin")!;
+  const coin = items.find(item => item.type === "coin" && Math.abs(item.x - hazard.x) < 30)!;
+  assert.equal(hazard.y, roof.y);
+  assert.ok(coin.y < roof.y - PLAYER_HEIGHT / 2 - 80);
 });

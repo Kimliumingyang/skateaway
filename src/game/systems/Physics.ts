@@ -81,20 +81,14 @@ export class PlatformGenerator {
   }
   next(previous: Roof, speed: number): Roof {
     this.index++;
-    const target = [430, 365, 420, 345, 400, 455][this.index % 6];
-    const y = Math.max(
-      330,
-      Math.min(
-        470,
-        previous.y + Math.max(-65, Math.min(65, target - previous.y)),
-      ),
-    );
+    // Long bridge → medium platform at the same height, then high / low beats.
+    const y = this.index === 1 ? 440 : this.index % 2 === 0 ? 380 : 440;
     const gap = safeGap(
       speed,
       previous.y - y,
       85 + this.random() * 45 + Math.min(25, this.index),
     );
-    const kind = [7, 6, 3, 7, 6, 2][this.index % 6];
+    const kind = this.index === 1 ? 2 : this.index % 2 === 0 ? 6 : 7;
     // Height determines uniform scale and width, so every source image ends on GROUND.
     return { x: previous.x + previous.w + gap, y, w: deckWidth(y, kind), kind };
   }

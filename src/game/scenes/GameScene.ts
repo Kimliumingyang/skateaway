@@ -4,6 +4,8 @@ import {
   HEIGHT,
   GROUND,
   PLAYER_SCREEN_X,
+  PLAYER_HEIGHT,
+  PLAYER_BODY_HEIGHT,
   deckScale,
   deckWidth,
 } from "../WorldConfig";
@@ -113,7 +115,7 @@ export class GameScene extends Phaser.Scene {
       18,
       "#e6cdf8",
     ).setDepth(20);
-    this.addRoof({ x: -100, y: 440, w: deckWidth(440, 2), kind: 2 });
+    this.addRoof({ x: -100, y: 440, w: deckWidth(440, 1), kind: 1 });
     this.populateUntil(2500);
     this.player = new Player(this);
     this.trickHint = label(this, WIDTH / 2, 150, "", 32, "#eeff42").setDepth(21);
@@ -162,6 +164,8 @@ export class GameScene extends Phaser.Scene {
     this.hintUntil = Infinity;
   }
   addRoof(roof: Roof) {
+    const previous = this.roofs.at(-1)?.roof;
+    const beforePrevious = this.roofs.at(-2)?.roof;
     const recycled = this.roofPool.pop();
     const texture = `building${roof.kind}`,
       im = (recycled?.art ?? this.add.image(0, 0, texture))
@@ -181,11 +185,13 @@ export class GameScene extends Phaser.Scene {
       .setVisible(true);
     this.roofs.push({ roof, art: im, ledge });
     this.roofModels.push(roof);
-    for (const spawn of layoutRoofItems(
-      roof,
-      this.generator.index,
+    // Plan a roof once its outgoing jump destination is known, ahead of the camera.
+    for (const spawn of previous ? layoutRoofItems(
+      previous,
+      this.generator.index - 1,
       speedAt(this.distance),
-    )) {
+      { previous: beforePrevious, next: roof },
+    ) : []) {
       this.addItem(spawn.x, spawn.y, spawn.type);
     }
   }
@@ -203,7 +209,8 @@ export class GameScene extends Phaser.Scene {
     this.items.push({ x, y, type, active: true, sprite });
   }
   populateUntil(x: number) {
-    while (this.roofs.at(-1)!.roof.x + this.roofs.at(-1)!.roof.w < x)
+    // Keep one destination beyond the horizon so even the long opening has its route planned.
+    while (this.roofs.at(-1)!.roof.x < x)
       this.addRoof(
         this.generator.next(this.roofs.at(-1)!.roof, speedAt(this.distance)),
       );
@@ -243,6 +250,8 @@ export class GameScene extends Phaser.Scene {
     this.trickButtonText.setAlpha(this.trickButton.alpha);
     if (this.tick >= this.hintUntil) this.trickHint.setText("");
     this.cameras.main.scrollX = x - PLAYER_SCREEN_X;
+    // Keep the enlarged character clear of the HUD during both jumps.
+    this.cameras.main.scrollY = Math.min(0, this.motion.y - PLAYER_HEIGHT - 110);
     this.sky.tilePositionX = this.distance * 0.08;
     this.far.tilePositionX = this.distance * 0.23;
     this.hud.setText(
@@ -283,7 +292,7 @@ export class GameScene extends Phaser.Scene {
       const dx = Math.abs(item.x - this.motion.x),
         foot = this.motion.y;
       if (item.type === "coin") {
-        if (dx < 42 && Math.abs(item.y - (foot - 65)) < 65) {
+        if (dx < 62 && Math.abs(item.y - (foot - PLAYER_HEIGHT / 2)) < PLAYER_HEIGHT * 0.35) {
           item.active = false;
           item.sprite.setVisible(false);
           this.coins++;
@@ -292,7 +301,7 @@ export class GameScene extends Phaser.Scene {
         }
       } else {
         const h = item.type === "banana" ? 28 : 65;
-        if (dx < 36 && foot > item.y - h + 8 && foot - 105 < item.y - 5) {
+        if (dx < 62 && foot > item.y - h + 8 && foot - PLAYER_BODY_HEIGHT < item.y - 5) {
           this.die();
           break;
         }
@@ -310,7 +319,7 @@ export class GameScene extends Phaser.Scene {
         oldX + 18 <= roof.x &&
         this.motion.x + 18 > roof.x &&
         this.motion.y > roof.y + 12 &&
-        this.motion.y - 105 < GROUND
+        this.motion.y - PLAYER_BODY_HEIGHT < GROUND
       ) {
         this.die();
         break;
@@ -345,11 +354,11 @@ export class GameScene extends Phaser.Scene {
     this.tweens.add({
       targets: this.player,
       angle: 95,
-      alpha: 0,
-      y: this.motion.y + 130,
+      alpha: 0.6,
+      y: this.motion.y + 40,
       duration: 450,
     });
-    this.time.delayedCall(600, () => {
+    this.time.delayedCall(1200, () => {
       this.scene.launch("Overlay", {
         mode: "over",
         origin: "Game",
