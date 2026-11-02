@@ -1,5 +1,7 @@
 # 走查细节调整：楼房、人物与路线金币
 
+后续用户确认保留画布、按参考图调整画面比例，人物现为 160px 高、金币间距 240px；下文 324px 记录为此前版本，当前配置见 [REFERENCE_PROPORTIONS.md](REFERENCE_PROPORTIONS.md)。
+
 基于 Trick + Combo 分支 cde390e，开发分支 feat/skateaway-route-polish。
 
 - 开局 1 号长桥 → 2 号中型平台，屋顶同高 y=440；随后 6 号高楼 y=380 → 7 号低楼 y=440，高低交替。楼间距继续通过现有跳跃可达性计算。
