@@ -129,3 +129,16 @@ test("single jump can land on each generated next roof at every speed", () => {
     current = next;
   }
 });
+
+test("opening sequence is 1 → 2 → 6, then alternating high and low roofs", () => {
+  const g = new PlatformGenerator(() => 0.5);
+  let current = { x: -100, y: 440, w: deckWidth(440, 1), kind: 1 };
+  const sequence = [current];
+  for (let i = 0; i < 8; i++) {
+    current = g.next(current, 290);
+    sequence.push(current);
+  }
+  assert.deepEqual(sequence.slice(0, 3).map(roof => roof.kind), [1, 2, 6]);
+  assert.equal(sequence[0].y, sequence[1].y);
+  assert.deepEqual(sequence.slice(2).map(roof => roof.y), [380, 440, 380, 440, 380, 440, 380]);
+});

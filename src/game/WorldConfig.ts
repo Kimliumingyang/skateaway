@@ -2,11 +2,15 @@ export const WIDTH = 1334;
 export const HEIGHT = 750;
 export const GROUND = 700;
 export const PLAYER_SCREEN_X = 240;
+export const PLAYER_HEIGHT = 324;
+export const PLAYER_BODY_HEIGHT = PLAYER_HEIGHT * 0.8;
+export const COIN_SPACING = 324;
 /** Measured source-space walkable decks; images retain their original aspect ratio. */
 export const DECKS: Record<
   number,
   { width: number; top: number; height: number }
 > = {
+  1: { width: 4400, top: 150, height: 583 },
   2: { width: 1950, top: 150, height: 667 },
   3: { width: 950, top: 285, height: 867 },
   6: { width: 700, top: 130, height: 938 },

@@ -1,4 +1,5 @@
 import Phaser from "phaser";
+import { PLAYER_HEIGHT } from "../WorldConfig";
 /** Single-frame user-supplied character cutout; motion feedback is procedural, not a sprite animation. */
 export class Player extends Phaser.GameObjects.Container {
   bodyArt: Phaser.GameObjects.Image;
@@ -9,7 +10,7 @@ export class Player extends Phaser.GameObjects.Container {
     this.bodyArt = scene.add
       .image(0, 0, "character", "trimmed")
       .setOrigin(0.5, 1);
-    this.bodyArt.setScale(132 / this.bodyArt.height);
+    this.bodyArt.setScale(PLAYER_HEIGHT / this.bodyArt.height);
     this.add(this.bodyArt);
   }
   pose(grounded: boolean, vy: number, time: number, trickElapsed = -1) {

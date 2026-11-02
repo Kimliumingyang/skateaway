@@ -18,6 +18,7 @@ export class BootScene extends Phaser.Scene {
       "character",
       "sky",
       "skyline",
+      "building1",
       "building6",
       "building2",
       "building3",

@@ -1,59 +1,58 @@
-import type { Roof } from "./Physics.ts";
+import { COIN_SPACING, PLAYER_HEIGHT, PLAYER_SCREEN_X } from "../WorldConfig.ts";
+import { GRAVITY, JUMP, type Roof } from "./Physics.ts";
 
-/** Pure level-item plan: art and collision objects are created by GameScene. */
 export type LevelItemType = "coin" | "cone" | "box" | "banana" | "warning";
-
 export interface LevelItemSpawn {
   x: number;
   y: number;
   type: LevelItemType;
 }
+interface Neighbors {
+  previous?: Roof;
+  next?: Roof;
+}
 
-/**
- * Place pickups along readable ground / jump arcs while reserving hazards
- * for rooftops with sufficient run-up. Keep this deterministic so we can
- * validate level pacing independently of Phaser or image assets.
+/** Single-jump route: jump just before the edge and land on the next roof. */
+export function gapRoute(from: Roof, to: Roof, speed: number) {
+  const start = from.x + from.w - 45;
+  const flight = (JUMP + Math.sqrt(JUMP * JUMP - 2 * GRAVITY * (from.y - to.y))) / GRAVITY;
+  return { start, end: start + speed * flight, y: from.y };
+}
+
+/** Sample a continuous, physically reachable route on a global 324px grid.
+ * Neighbors let coins lead through gaps, rather than drawing unrelated sine waves.
  */
 export function layoutRoofItems(
   roof: Roof,
   segmentIndex: number,
   speed: number,
+  { previous, next }: Neighbors = {},
 ): LevelItemSpawn[] {
-  if (segmentIndex <= 0) return [];
-
   const items: LevelItemSpawn[] = [];
-
-  if (segmentIndex % 4 !== 1 && roof.w >= speed * 1.55) {
+  let hazardX: number | undefined;
+  // Give the opening bridge and second building an unobstructed learning section.
+  if (segmentIndex >= 2 && segmentIndex % 4 !== 1 && roof.w >= speed * 1.55) {
+    hazardX = roof.x + roof.w * 0.52;
     const hazards = ["cone", "box", "banana", "warning"] as const;
-    items.push({
-      x: roof.x + roof.w * 0.52,
-      y: roof.y,
-      type: hazards[segmentIndex % hazards.length],
-    });
+    items.push({ x: hazardX, y: roof.y, type: hazards[segmentIndex % hazards.length] });
   }
-
-  // A readable string of coins on the roof; alternate low and jump arcs.
-  const coinCount = Math.min(5, Math.floor((roof.w - 85) / 57));
-  for (let i = 0; i < coinCount; i++) {
-    const jumpArc =
-      segmentIndex % 2 === 0 ? Math.sin((i / 4) * Math.PI) * 60 : 0;
-    items.push({
-      x: roof.x + 65 + i * 57,
-      y: roof.y - 70 - jumpArc,
-      type: "coin",
-    });
-  }
-
-  // Near the beginning of selected rooftops, reward gap-jump timing.
-  if (segmentIndex % 3 === 0) {
-    for (let i = 0; i < 3; i++) {
-      items.push({
-        x: roof.x - 85 + i * 40,
-        y: roof.y - 125 - Math.sin((i / 2) * Math.PI) * 35,
-        type: "coin",
-      });
+  const incoming = previous ? gapRoute(previous, roof, speed) : undefined;
+  const outgoing = next ? gapRoute(roof, next, speed) : undefined;
+  const obstacleJump = hazardX === undefined ? undefined : {
+    start: hazardX - speed * JUMP / GRAVITY,
+    end: hazardX + speed * JUMP / GRAVITY,
+    y: roof.y,
+  };
+  const firstCoin = PLAYER_SCREEN_X + COIN_SPACING;
+  const first = Math.max(firstCoin, firstCoin + Math.ceil((roof.x - firstCoin) / COIN_SPACING) * COIN_SPACING);
+  for (let x = first; x < (next?.x ?? roof.x + roof.w); x += COIN_SPACING) {
+    let foot = roof.y;
+    const jump = [incoming, outgoing, obstacleJump].find(route => route && x >= route.start && x <= route.end);
+    if (jump) {
+      const t = (x - jump.start) / speed;
+      foot = jump.y - JUMP * t + 0.5 * GRAVITY * t * t;
     }
+    items.push({ x, y: foot - PLAYER_HEIGHT / 2, type: "coin" });
   }
-
   return items;
 }
