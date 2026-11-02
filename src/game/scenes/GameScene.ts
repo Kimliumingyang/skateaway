@@ -19,6 +19,7 @@ import { Player } from "../entities/Player";
 import { label, artButton } from "../ui/Controls";
 import { save } from "../systems/SaveManager";
 import { audio } from "../systems/AudioManager";
+import { TrickCombo } from "../systems/TrickCombo";
 interface PlatformView {
   roof: Roof;
   art: Phaser.GameObjects.Image;
@@ -50,6 +51,12 @@ export class GameScene extends Phaser.Scene {
   hud!: Phaser.GameObjects.Text;
   best!: Phaser.GameObjects.Text;
   tick = 0;
+  tricks = new TrickCombo();
+  trickStarted = -1;
+  trickHint!: Phaser.GameObjects.Text;
+  trickButton!: Phaser.GameObjects.Rectangle;
+  trickButtonText!: Phaser.GameObjects.Text;
+  hintUntil = 0;
   constructor() {
     super("Game");
   }
@@ -68,6 +75,9 @@ export class GameScene extends Phaser.Scene {
     this.dead = false;
     this.accumulator = 0;
     this.tick = 0;
+    this.tricks = new TrickCombo();
+    this.trickStarted = -1;
+    this.hintUntil = 0;
     this.sky = this.add
       .tileSprite(0, 0, WIDTH, HEIGHT, "sky")
       .setOrigin(0)
@@ -99,13 +109,24 @@ export class GameScene extends Phaser.Scene {
       this,
       WIDTH / 2,
       727,
-      "TAP / SPACE · JUMP    ×2 · DOUBLE JUMP    P / ESC · PAUSE",
+      "TAP / SPACE · JUMP    ×2 · DOUBLE JUMP    J · TRICK    P / ESC · PAUSE",
       18,
       "#e6cdf8",
     ).setDepth(20);
     this.addRoof({ x: -100, y: 440, w: deckWidth(440, 2), kind: 2 });
     this.populateUntil(2500);
     this.player = new Player(this);
+    this.trickHint = label(this, WIDTH / 2, 150, "", 32, "#eeff42").setDepth(21);
+    this.trickButton = this.add.rectangle(WIDTH - 110, HEIGHT - 100, 180, 80, 0x36116c)
+      .setStrokeStyle(3, 0xbc6bff).setScrollFactor(0).setDepth(21)
+      .setInteractive({ useHandCursor: true });
+    this.trickButtonText = label(this, WIDTH - 110, HEIGHT - 100, "TRICK · J", 26)
+      .setDepth(22);
+    this.trickButton.on("pointerdown", (_p: Phaser.Input.Pointer, _x: number, _y: number,
+      event: Phaser.Types.Input.EventData) => {
+      event.stopPropagation();
+      this.performTrick();
+    });
     const jump = () => {
       if (!this.dead) this.motion.requestJump();
     };
@@ -119,6 +140,7 @@ export class GameScene extends Phaser.Scene {
         jump();
       }
       if (e.code === "KeyP" || e.code === "Escape") this.pause();
+      if (e.code === "KeyJ") this.performTrick();
     };
     const visibility = () => {
       audio.sync();
@@ -132,6 +154,12 @@ export class GameScene extends Phaser.Scene {
       this.input.keyboard?.off("keydown", key);
       document.removeEventListener("visibilitychange", visibility);
     });
+  }
+  performTrick() {
+    if (this.dead || !this.scene.isActive() || !this.tricks.request(this.motion.grounded)) return;
+    this.trickStarted = this.tick;
+    this.trickHint.setText("KICKFLIP · LAND TO BANK");
+    this.hintUntil = Infinity;
   }
   addRoof(roof: Roof) {
     const recycled = this.roofPool.pop();
@@ -206,9 +234,14 @@ export class GameScene extends Phaser.Scene {
       this.fixedUpdate(STEP);
       this.accumulator -= STEP;
     }
+    if (this.dead) return;
     const x = this.motion.x;
     this.player.setPosition(x, this.motion.y);
-    this.player.pose(this.motion.grounded, this.motion.vy, this.tick * 1000);
+    this.player.pose(this.motion.grounded, this.motion.vy, this.tick * 1000,
+      this.trickStarted < 0 ? -1 : this.tick - this.trickStarted);
+    this.trickButton.setAlpha(!this.motion.grounded && !this.tricks.pending ? 1 : 0.55);
+    this.trickButtonText.setAlpha(this.trickButton.alpha);
+    if (this.tick >= this.hintUntil) this.trickHint.setText("");
     this.cameras.main.scrollX = x - PLAYER_SCREEN_X;
     this.sky.tilePositionX = this.distance * 0.08;
     this.far.tilePositionX = this.distance * 0.23;
@@ -225,7 +258,9 @@ export class GameScene extends Phaser.Scene {
     this.distance += speed * dt;
     const oldX = this.motion.x;
     this.motion.x += speed * dt;
+    const wasGrounded = this.motion.grounded;
     const event = this.motion.step(dt, this.roofModels);
+    const landed = !wasGrounded && this.motion.grounded;
     if (event) {
       audio.tone(event === "jump" ? "jump" : "land");
       this.burst(
@@ -234,7 +269,7 @@ export class GameScene extends Phaser.Scene {
         event === "jump" ? 0xf52bc9 : 0xbcecff,
       );
     }
-    this.score = Math.floor(this.distance / 10) + this.coins * 25;
+    this.updateScore();
     this.populateUntil(this.motion.x + WIDTH + 800);
     while (this.roofs[0]?.roof.x + this.roofs[0].roof.w < this.motion.x - 600) {
       const p = this.roofs.shift()!;
@@ -282,10 +317,27 @@ export class GameScene extends Phaser.Scene {
       }
     }
     if (this.motion.y >= GROUND + 8) this.die();
+    // Resolve after hazards: touching an obstacle on the landing step cannot bank a trick.
+    if (!this.dead && landed) {
+      const award = this.tricks.land();
+      this.trickStarted = -1;
+      if (award) {
+        this.trickHint.setText(`KICKFLIP +${award}${this.tricks.combo > 1 ? `\nCOMBO ×${this.tricks.combo}` : ""}`);
+        this.hintUntil = this.tick + 1.2;
+      }
+    }
+    this.updateScore();
+  }
+  updateScore() {
+    this.score = Math.floor(this.distance / 10) + this.coins * 25 + this.tricks.points;
   }
   die() {
     if (this.dead) return;
     this.dead = true;
+    this.tricks.crash();
+    this.trickStarted = -1;
+    this.trickHint.setText("");
+    this.updateScore();
     audio.tone("death");
     this.cameras.main.shake(180, 0.009);
     this.burst(this.motion.x, this.motion.y - 65, 0xff3dbf);
