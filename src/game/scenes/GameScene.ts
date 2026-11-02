@@ -14,6 +14,7 @@ import {
   speedAt,
   type Roof,
 } from "../systems/Physics";
+import { layoutRoofItems, type LevelItemType } from "../systems/LevelItems";
 import { Player } from "../entities/Player";
 import { label, artButton } from "../ui/Controls";
 import { save } from "../systems/SaveManager";
@@ -26,7 +27,7 @@ interface PlatformView {
 interface Item {
   x: number;
   y: number;
-  type: "coin" | "cone" | "box" | "banana" | "warning";
+  type: LevelItemType;
   active: boolean;
   sprite: Phaser.GameObjects.Image;
 }
@@ -152,31 +153,12 @@ export class GameScene extends Phaser.Scene {
       .setVisible(true);
     this.roofs.push({ roof, art: im, ledge });
     this.roofModels.push(roof);
-    if (this.generator.index > 0) {
-      if (
-        this.generator.index % 4 !== 1 &&
-        roof.w >= speedAt(this.distance) * 1.55
-      ) {
-        const types = ["cone", "box", "banana", "warning"] as const;
-        this.addItem(
-          roof.x + roof.w * 0.52,
-          roof.y,
-          types[this.generator.index % 4],
-        );
-      }
-      for (let i = 0; i < Math.min(5, Math.floor((roof.w - 85) / 57)); i++) {
-        const arc =
-          this.generator.index % 2 === 0 ? Math.sin((i / 4) * Math.PI) * 60 : 0;
-        this.addItem(roof.x + 65 + i * 57, roof.y - 70 - arc, "coin");
-      }
-      if (this.generator.index % 3 === 0) {
-        for (let i = 0; i < 3; i++)
-          this.addItem(
-            roof.x - 85 + i * 40,
-            roof.y - 125 - Math.sin((i / 2) * Math.PI) * 35,
-            "coin",
-          );
-      }
+    for (const spawn of layoutRoofItems(
+      roof,
+      this.generator.index,
+      speedAt(this.distance),
+    )) {
+      this.addItem(spawn.x, spawn.y, spawn.type);
     }
   }
   addItem(x: number, y: number, type: Item["type"]) {
