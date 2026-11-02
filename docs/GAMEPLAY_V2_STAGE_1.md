@@ -44,6 +44,6 @@ npm run dev
 
 浏览器打开终端显示的地址，通常为 `http://localhost:5173`。手机推荐横屏；同一局域网手机可访问开发机 IP 的 5173 端口。
 
-另交付包含现有 runtime 素材的静态试玩 ZIP。解压后在该目录执行 `python3 -m http.server 8080`，打开 `http://localhost:8080`。请通过 HTTP 访问，勿直接双击 index.html。
+静态试玩方式：执行 `npm run build -- --base=./`，再执行 `npm run preview`，打开终端显示的地址（通常为 `http://localhost:4173`）。也可以将 `dist/` 复制到静态服务器。请通过 HTTP 访问，勿直接双击 index.html。
 
 本次未发布在线部署。现有 GitHub Pages 的 `main/preview/` 仍是旧版，不能用于验收本次 Trick + Combo。未开发 Grind、Fever、任务或新的金币系统，等待试玩反馈。
