@@ -1,4 +1,4 @@
-import { COIN_SPACING, PLAYER_HEIGHT, PLAYER_SCREEN_X } from "../WorldConfig.ts";
+import { COIN_SPACING, COIN_FOOT_OFFSET, PLAYER_SCREEN_X } from "../WorldConfig.ts";
 import { GRAVITY, JUMP, type Roof } from "./Physics.ts";
 
 export type LevelItemType = "coin" | "cone" | "box" | "banana" | "warning";
@@ -19,7 +19,7 @@ export function gapRoute(from: Roof, to: Roof, speed: number) {
   return { start, end: start + speed * flight, y: from.y };
 }
 
-/** Sample a continuous, physically reachable route on a global 324px grid.
+/** Sample a continuous, physically reachable route on the reference-spacing grid.
  * Neighbors let coins lead through gaps, rather than drawing unrelated sine waves.
  */
 export function layoutRoofItems(
@@ -52,7 +52,7 @@ export function layoutRoofItems(
       const t = (x - jump.start) / speed;
       foot = jump.y - JUMP * t + 0.5 * GRAVITY * t * t;
     }
-    items.push({ x, y: foot - PLAYER_HEIGHT / 2, type: "coin" });
+    items.push({ x, y: foot - COIN_FOOT_OFFSET, type: "coin" });
   }
   return items;
 }

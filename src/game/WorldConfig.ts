@@ -1,10 +1,13 @@
 export const WIDTH = 1334;
 export const HEIGHT = 750;
 export const GROUND = 700;
-export const PLAYER_SCREEN_X = 240;
-export const PLAYER_HEIGHT = 324;
+export const PLAYER_SCREEN_X = 140;
+/** Reference composition within the unchanged 1334×750 canvas. */
+export const PLAYER_HEIGHT = 160;
 export const PLAYER_BODY_HEIGHT = PLAYER_HEIGHT * 0.8;
-export const COIN_SPACING = 324;
+export const COIN_SPACING = 240;
+export const COIN_FOOT_OFFSET = 24;
+export const CAMERA_BASE_Y = -60;
 /** Measured source-space walkable decks; images retain their original aspect ratio. */
 export const DECKS: Record<
   number,

@@ -17,16 +17,22 @@ for (const viewport of [{ width: 1334, height: 750 }, { width: 844, height: 390 
         heights: g.roofs.slice(0, 3).map((view: any) => view.roof.y),
         height: g.player.bodyArt.displayHeight,
         width: g.player.bodyArt.displayWidth,
+        roofScreenY: g.motion.y - g.cameras.main.scrollY,
+        crashScale: g.player.crashArt.scaleX,
+        canvas: [(window as any).skateaway.scale.width, (window as any).skateaway.scale.height],
         coins: g.items.filter((item: any) => item.type === "coin").map((item: any) => item.x),
       };
     });
     expect(opening.kinds).toEqual([1, 2, 6]);
     expect(opening.heights).toEqual([440, 440, 380]);
-    expect(opening.height).toBeCloseTo(324);
-    expect(opening.width).toBeLessThanOrEqual(324);
+    expect(opening.height).toBeCloseTo(160);
+    expect(opening.canvas).toEqual([1334, 750]);
+    expect(opening.roofScreenY).toBeCloseTo(500);
+    expect(opening.crashScale).toBeCloseTo(160 / 324);
+    expect(opening.width).toBeLessThanOrEqual(160);
     expect(opening.coins.length).toBeGreaterThan(5);
     for (let i = 1; i < opening.coins.length; i++)
-      expect(opening.coins[i] - opening.coins[i - 1]).toBeCloseTo(324);
+      expect(opening.coins[i] - opening.coins[i - 1]).toBeCloseTo(240);
     await page.waitForFunction(() => (window as any).skateaway.scene.getScene("Game").coins > 0);
     await page.keyboard.press("Space");
     await page.waitForTimeout(90);

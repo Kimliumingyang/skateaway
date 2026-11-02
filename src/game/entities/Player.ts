@@ -14,8 +14,10 @@ export class Player extends Phaser.GameObjects.Container {
     this.bodyArt.setScale(PLAYER_HEIGHT / this.bodyArt.height);
     this.add(this.bodyArt);
     const crash = scene.cache.json.get("crash-data");
-    this.crashArt = scene.add.sprite(24, 0, "crash", 0)
-      .setOrigin(crash.originX, crash.originY).setVisible(false);
+    // The atlas's standing pose was packed at 324px; match the skating pose's new height.
+    const crashScale = PLAYER_HEIGHT / 324;
+    this.crashArt = scene.add.sprite(24 * crashScale, 0, "crash", 0)
+      .setOrigin(crash.originX, crash.originY).setScale(crashScale).setVisible(false);
     this.add(this.crashArt);
   }
   playCrash(onComplete: () => void) {
