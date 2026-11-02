@@ -48,9 +48,22 @@ export class BootScene extends Phaser.Scene {
     ];
     for (const n of names)
       this.load.image(n, `${import.meta.env.BASE_URL}assets/${n}.png`);
+    this.load.spritesheet("crash", `${import.meta.env.BASE_URL}assets/crash.png`, {
+      frameWidth: 616,
+      frameHeight: 412,
+    });
+    this.load.json("crash-data", `${import.meta.env.BASE_URL}assets/crash.json`);
   }
   create() {
     this.textures.get("character").add("trimmed", 0, 150, 32, 880, 1265);
+    if (!this.anims.exists("crash")) {
+      this.anims.create({
+        key: "crash",
+        frames: this.cache.json.get("crash-data").frames,
+        frameRate: 1000 / 34,
+        repeat: 0,
+      });
+    }
     this.scene.start("Menu");
   }
 }

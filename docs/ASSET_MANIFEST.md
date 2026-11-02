@@ -171,3 +171,8 @@ Extracted Asset directory was inspected first. Archive was listed without extrac
 | `__MACOSX/Asset/Skateaway/弹窗/._popup_ranking_popup.png.png` | 212 |
 | `Asset/Skateaway/弹窗/btn_close.png` | 2035 |
 | `__MACOSX/Asset/Skateaway/弹窗/._btn_close.png` | 212 |
+## Crash animation supplied in chat
+
+`摔倒.png.zip` contains one transparent animated PNG (APNG), 2048×1372, 23 frames at 34ms each (782ms). PNG SHA-256: `dbeba486941f8eed1d3a6179a3828f1deca9c10b35ff0f49741aaa8eeb13e802`. Consecutive duplicate frames are packed into four unchanged poses with durations 136 / 136 / 136 / 374ms. Runtime `public/assets/crash.png` is a 2464×412 sheet of four 616×412 cells, with common canvas registration preserved and no pose redrawing. `crash.json` records source hash, anchor and timing. Original uploaded ZIP is read only; reproduce with `python3 scripts/pack-crash.py <uploaded-zip>` (Pillow required). Original project Asset.zip is untouched.
+
+This supersedes the earlier missing-crash-animation note: skating remains a single frame; impact crashes now use the supplied animation. The sequence plays once, keeps the final pose, then shows replay 400ms after completion. Gap falls retain their existing falling effect.

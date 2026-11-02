@@ -325,7 +325,7 @@ export class GameScene extends Phaser.Scene {
         break;
       }
     }
-    if (this.motion.y >= GROUND + 8) this.die();
+    if (this.motion.y >= GROUND + 8) this.die("fall");
     // Resolve after hazards: touching an obstacle on the landing step cannot bank a trick.
     if (!this.dead && landed) {
       const award = this.tricks.land();
@@ -340,7 +340,7 @@ export class GameScene extends Phaser.Scene {
   updateScore() {
     this.score = Math.floor(this.distance / 10) + this.coins * 25 + this.tricks.points;
   }
-  die() {
+  die(reason: "impact" | "fall" = "impact") {
     if (this.dead) return;
     this.dead = true;
     this.tricks.crash();
@@ -351,14 +351,7 @@ export class GameScene extends Phaser.Scene {
     this.cameras.main.shake(180, 0.009);
     this.burst(this.motion.x, this.motion.y - 65, 0xff3dbf);
     save.finish(this.score, this.coins);
-    this.tweens.add({
-      targets: this.player,
-      angle: 95,
-      alpha: 0.6,
-      y: this.motion.y + 40,
-      duration: 450,
-    });
-    this.time.delayedCall(1200, () => {
+    const showReplay = () => {
       this.scene.launch("Overlay", {
         mode: "over",
         origin: "Game",
@@ -366,6 +359,21 @@ export class GameScene extends Phaser.Scene {
         coins: this.coins,
       });
       this.scene.pause();
-    });
+    };
+    this.player.setPosition(this.motion.x, this.motion.y);
+    if (reason === "impact") {
+      // Freeze the run, let the sprite animation finish, then hold the final pose.
+      this.player.playCrash(() => this.time.delayedCall(400, showReplay));
+    } else {
+      // Falling into a gap retains a falling pose rather than landing in midair.
+      this.tweens.add({
+        targets: this.player,
+        angle: 95,
+        alpha: 0.6,
+        y: this.motion.y + 40,
+        duration: 450,
+      });
+      this.time.delayedCall(1200, showReplay);
+    }
   }
 }
