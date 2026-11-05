@@ -27,7 +27,7 @@ export function layoutHazards(roof: Roof, index: number, speed: number): LevelIt
   const coinOrigin = PLAYER_SCREEN_X + COIN_SPACING;
   const first = coinOrigin + Math.ceil((start - coinOrigin) / COIN_SPACING) * COIN_SPACING;
   for (let x = first; x <= end; x += spacing) {
-    items.push({ x, y: roof.y, type: types[(index + items.length) % types.length] });
+    items.push({ x, y: roof.y, type: types[(Math.floor(index / 4) + items.length) % types.length] });
   }
   return items;
 }

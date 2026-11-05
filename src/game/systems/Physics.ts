@@ -88,7 +88,9 @@ export class PlatformGenerator {
       previous.y - y,
       85 + this.random() * 45 + Math.min(25, this.index),
     );
-    const kind = this.index === 1 ? 2 : this.index % 2 === 0 ? 6 : 7;
+    // Reintroduce a longer low platform regularly for obstacle beats, with
+    // short high roofs and the alternate low roof reserved for gap recovery.
+    const kind = this.index % 2 === 0 ? 6 : this.index % 4 === 1 ? 2 : 7;
     // Height determines uniform scale and width, so every source image ends on GROUND.
     return { x: previous.x + previous.w + gap, y, w: deckWidth(y, kind), kind };
   }

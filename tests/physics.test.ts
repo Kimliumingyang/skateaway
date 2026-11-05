@@ -140,5 +140,6 @@ test("opening sequence is 1 → 2 → 6, then alternating high and low roofs", (
   }
   assert.deepEqual(sequence.slice(0, 3).map(roof => roof.kind), [1, 2, 6]);
   assert.equal(sequence[0].y, sequence[1].y);
+  assert.deepEqual(sequence.map(roof => roof.kind), [1, 2, 6, 7, 6, 2, 6, 7, 6]);
   assert.deepEqual(sequence.slice(2).map(roof => roof.y), [640, 720, 640, 720, 640, 720, 640]);
 });
