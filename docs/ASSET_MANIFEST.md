@@ -176,3 +176,11 @@ Extracted Asset directory was inspected first. Archive was listed without extrac
 `摔倒.png.zip` contains one transparent animated PNG (APNG), 2048×1372, 23 frames at 34ms each (782ms). PNG SHA-256: `dbeba486941f8eed1d3a6179a3828f1deca9c10b35ff0f49741aaa8eeb13e802`. Consecutive duplicate frames are packed into four unchanged poses with durations 136 / 136 / 136 / 374ms. Runtime `public/assets/crash.png` is a 2464×412 sheet of four 616×412 cells, with common canvas registration preserved and no pose redrawing. `crash.json` records source hash, anchor and timing. Original uploaded ZIP is read only; reproduce with `python3 scripts/pack-crash.py <uploaded-zip>` (Pillow required). Original project Asset.zip is untouched.
 
 This supersedes the earlier missing-crash-animation note: skating remains a single frame; impact crashes now use the supplied animation. The sequence plays once, keeps the final pose, then shows replay 400ms after completion. Gap falls retain their existing falling effect.
+
+## Graffiti UI and coin SFX
+
+UI panels, tape corners, brush shapes, buttons, switches and icons are scalable Phaser Graphics objects with live text; they are not flattened screenshots and contain no baked-in score. Existing character, building and city art remain intact. UI fonts are self-hosted WOFF subsets: Permanent Marker (Apache 2.0) and Kalam Bold (SIL OFL 1.1); license files and source notices are under public/assets/fonts/.
+
+Original generated coin SFX: public/assets/sfx/coin.wav, 260ms, mono 44.1kHz 16-bit PCM, peak -3.7 dBFS before playback gain 0.22. Reproduce with scripts/generate-coin-sfx.py using standard-library synthesis, no third-party samples. Soft attack/release, ascending pitched notes with quiet metallic overtones. Playback is decoded once, limited to four simultaneous voices and at least 35ms between starts; the SFX switch mutes and stops active coin sounds.
+
+The uploaded Cyan Kickflip.mp3 is byte-identical to the existing public/assets/music.mp3 (SHA-256 36a616a6dbd566e48f05d193823f30380083bd1a16aee98cb2aaf16be9ae210f): 93.24 seconds, stereo, 48kHz. The supplied track remains the looping BGM; no duplicate music asset was created.

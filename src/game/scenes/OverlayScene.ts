@@ -1,5 +1,15 @@
 import Phaser from "phaser";
-import { label, button, artButton, fitMenuLayout } from "../ui/Controls";
+import { label, fitMenuLayout } from "../ui/Controls";
+import {
+  panel,
+  paint,
+  marker,
+  graffitiButton,
+  iconButton,
+  icon,
+  toggle,
+  ink,
+} from "../ui/Graffiti";
 import { save } from "../systems/SaveManager";
 import { audio } from "../systems/AudioManager";
 type Mode = "pause" | "settings" | "ranking" | "over";
@@ -22,7 +32,8 @@ export class OverlayScene extends Phaser.Scene {
   create() {
     this.draw();
     const key = (e: KeyboardEvent) => {
-      if (e.code === "Escape" && this.mode !== "over") this.close();
+      if (!e.repeat && e.code === "Escape" && this.mode !== "over")
+        this.close();
     };
     this.input.keyboard?.on("keydown", key);
     this.events.once("shutdown", () =>
@@ -36,114 +47,215 @@ export class OverlayScene extends Phaser.Scene {
       return;
     }
     this.scene.stop();
-    if (this.origin === "Game") this.scene.resume("Game");
+    this.scene.resume(this.origin);
   }
   restart() {
     this.scene.stop("Game");
     this.scene.start("Game");
   }
-  draw() {
-    this.children.removeAll(true);
-    this.add.rectangle(667, 375, 1334, 750, 0x090414, 0.86);
-    const panel = this.add.image(667, 372, "panel-pause");
-    panel.setScale(900 / panel.width);
-    this.add
-      .rectangle(667, 375, 860, 650, 0x20103e, 0.97)
-      .setStrokeStyle(2, 0xa346ed);
-    this.add.rectangle(667, 53, 860, 5, 0xf3ff3e);
-    label(
-      this,
-      667,
-      105,
-      {
-        pause: "TAKE A BREATHER",
-        settings: "YOUR MIX",
-        ranking: "LOCAL LEGENDS",
-        over: "RUN ENDED",
-      }[this.mode],
-      36,
-      "#eeff42",
-    );
-    if (this.mode === "pause") {
-      label(this, 667, 173, "The city can wait.", 23, "#d5b8f7");
-      artButton(this, 667, 275, "btn_continue", () => this.close(), 110);
-      button(this, 667, 400, "SETTINGS", () => {
-        this.returnMode = "pause";
-        this.mode = "settings";
-        this.draw();
-      });
-      button(this, 667, 505, "RESTART", () => this.restart());
-      button(this, 667, 610, "RETURN TO MENU", () => this.menu());
-    } else if (this.mode === "settings") {
-      label(
-        this,
-        667,
-        178,
-        "Saved automatically on this device",
-        21,
-        "#d5b8f7",
-      );
-      for (const [i, key] of (["music", "sfx"] as const).entries()) {
-        label(
-          this,
-          540,
-          300 + i * 125,
-          key === "music" ? "MUSIC" : "SOUND FX",
-          28,
-        );
-        artButton(
-          this,
-          805,
-          300 + i * 125,
-          save.data[key] ? "sound_on" : "sound_off",
-          () => {
-            audio.unlock();
-            save.data[key] = !save.data[key];
-            save.save();
-            audio.sync();
-            this.draw();
-          },
-          112,
-        );
-      }
-      button(this, 667, 590, "SAVE & CLOSE", () => this.close());
-    } else if (this.mode === "ranking") {
-      label(this, 667, 162, "TOP 10 · ON THIS DEVICE", 19, "#d5b8f7");
-      if (!save.data.records.length)
-        label(this, 667, 355, "Your first run starts the story.", 24);
-      save.data.records.forEach((r, i) => {
-        label(
-          this,
-          410,
-          205 + i * 36,
-          String(i + 1).padStart(2, "0"),
-          21,
-          "#ef42d1",
-        );
-        label(this, 660, 205 + i * 36, String(r.score), 23, "#eeff42");
-        label(this, 920, 205 + i * 36, `${r.coins} C`, 21);
-      });
-      button(this, 667, 625, "CLOSE", () => this.close());
-    } else {
-      label(this, 667, 188, "DISTANCE + COIN BONUS", 19, "#d5b8f7");
-      label(this, 667, 265, String(this.score).padStart(6, "0"), 68, "#eeff42");
-      label(this, 667, 345, `BEST ${save.data.best}`, 27);
-      label(
-        this,
-        667,
-        400,
-        `+ ${this.coins} COINS   ·   BANK ${save.data.wallet}`,
-        23,
-        "#f5b9ee",
-      );
-      artButton(this, 667, 505, "btn_retry", () => this.restart(), 280);
-      button(this, 667, 625, "RETURN TO MENU", () => this.menu());
-    }
-    label(this, 667, 728, "YiDD STUDIO / SKATEAWAY", 16, "#a17cc1");
-    fitMenuLayout(this);
-  }
   menu() {
     this.scene.stop("Game");
     this.scene.start("Menu");
+  }
+  draw() {
+    this.children.removeAll(true);
+    // Full-screen hit shield prevents popup taps reaching the menu or jump input.
+    this.add
+      .rectangle(667, 375, 1334, 750, 0x120920, 0.57)
+      .setInteractive()
+      .on(
+        "pointerdown",
+        (
+          _p: Phaser.Input.Pointer,
+          _x: number,
+          _y: number,
+          e: Phaser.Types.Input.EventData,
+        ) => e.stopPropagation(),
+      );
+    panel(this, 667, 381, 846, 608);
+    if (this.mode === "pause") {
+      marker(this, 667, 146, "TAKE A BREATHER", 44).setAngle(-2);
+      label(this, 667, 213, "The city can wait.", 29, "#d5a8e6");
+      this.add.rectangle(667, 240, 170, 2, ink.purple, 0.5);
+      graffitiButton(this, 667, 313, "RESUME", () => this.close(), 480, {
+        tone: "primary",
+        icon: "play",
+        height: 88,
+        fontSize: 40,
+        name: "resume",
+      });
+      graffitiButton(this, 667, 423, "RESTART", () => this.restart(), 480, {
+        icon: "restart",
+        height: 80,
+        fontSize: 36,
+        name: "restart",
+      });
+      graffitiButton(this, 667, 529, "RETURN TO MENU", () => this.menu(), 480, {
+        icon: "home",
+        height: 80,
+        fontSize: 30,
+        name: "menu",
+      });
+      graffitiButton(
+        this,
+        667,
+        617,
+        "SETTINGS",
+        () => {
+          this.returnMode = "pause";
+          this.mode = "settings";
+          this.draw();
+        },
+        230,
+        { icon: "settings", height: 48, fontSize: 20, name: "settings" },
+      );
+      icon(this, 1008, 614, "crown", 63, ink.yellow).setAngle(12);
+    } else {
+      const title = {
+        settings: "SETTINGS",
+        ranking: "LOCAL LEGENDS",
+        over: "RUN ENDED",
+      }[this.mode];
+      paint(
+        this,
+        667,
+        110,
+        this.mode === "ranking" ? 490 : 440,
+        78,
+        ink.purple,
+        -2,
+      );
+      marker(
+        this,
+        686,
+        105,
+        title,
+        this.mode === "ranking" ? 38 : 47,
+        "#1b1029",
+      ).setAngle(-2);
+      icon(
+        this,
+        this.mode === "ranking" ? 405 : 433,
+        107,
+        this.mode === "settings"
+          ? "settings"
+          : this.mode === "over"
+            ? "skull"
+            : "ranks",
+        64,
+        this.mode === "over" ? ink.purple : ink.yellow,
+      ).setAngle(-9);
+      if (this.mode !== "over")
+        iconButton(this, 1074, 106, "close", () => this.close(), 70);
+      if (this.mode === "settings") this.settings();
+      else if (this.mode === "ranking") this.ranking();
+      else this.over();
+    }
+    fitMenuLayout(this);
+  }
+  settings() {
+    const supported = typeof navigator.vibrate === "function";
+    const rows = [
+      { key: "music", title: "MUSIC", icon: "music" },
+      { key: "sfx", title: "SFX", icon: "sound" },
+      { key: "vibration", title: "VIBRATION", icon: "phone" },
+    ] as const;
+    for (const [i, row] of rows.entries()) {
+      const y = 275 + i * 119;
+      this.add.rectangle(667, y + 55, 650, 2, 0x805390, 0.38);
+      icon(this, 377, y, row.icon, 41, ink.light);
+      label(this, 541, y, row.title, 34, "#e5bfe9").setOrigin(0, 0.5).setX(434);
+      toggle(
+        this,
+        932,
+        y,
+        save.data[row.key],
+        () => {
+          audio.unlock();
+          save.data[row.key] = !save.data[row.key];
+          save.save();
+          audio.sync();
+          if (row.key === "vibration" && save.data.vibration)
+            navigator.vibrate?.(25);
+          this.draw();
+        },
+        row.key,
+        row.key === "vibration" && !supported,
+      );
+      if (row.key === "vibration" && !supported)
+        label(this, 784, y, "UNAVAILABLE", 15, "#a57cbb");
+    }
+    label(this, 667, 624, "Saved automatically on this device", 21, "#bf94d2");
+  }
+  ranking() {
+    label(this, 667, 184, "TOP 10 · ON THIS DEVICE", 20, "#d6b1e4");
+    const data = save.data.records;
+    if (!data.length) {
+      icon(this, 667, 310, "crown", 66, ink.yellow);
+      label(this, 667, 392, "Your first run starts the story.", 28, "#e5bfe9");
+    } else {
+      label(this, 398, 224, "RANK", 17, "#b589cb");
+      label(this, 679, 224, "SCORE", 17, "#b589cb");
+      label(this, 944, 224, "COINS", 17, "#b589cb");
+      data.forEach((r, i) => {
+        const y = 268 + i * 30;
+        if (i < 3) this.add.rectangle(667, y, 655, 29, 0x83539b, 0.12);
+        marker(
+          this,
+          398,
+          y,
+          String(i + 1).padStart(2, "0"),
+          20,
+          i < 3 ? "#ffcb38" : "#c795d8",
+        );
+        label(this, 679, y, r.score.toLocaleString(), 24, "#ffdb72");
+        label(this, 944, y, String(r.coins), 21, "#ddbae6");
+      });
+    }
+    graffitiButton(this, 667, 626, "CLOSE", () => this.close(), 265, {
+      height: 58,
+      fontSize: 26,
+      name: "close-ranking",
+    });
+  }
+  over() {
+    label(this, 667, 197, "DISTANCE + COINS + TRICKS", 20, "#dfbae9");
+    marker(this, 650, 284, String(this.score).padStart(6, "0"), 96).setStroke(
+      "#150c24",
+      3,
+    );
+    icon(this, 966, 276, "crown", 71, ink.yellow).setAngle(13);
+    paint(this, 667, 371, 300, 46, 0x88559f, 0);
+    label(
+      this,
+      667,
+      367,
+      `BEST ${save.data.best.toLocaleString()}`,
+      29,
+      "#efd5f4",
+    );
+    label(
+      this,
+      667,
+      442,
+      `+${this.coins} COINS   ·   BANK ${save.data.wallet.toLocaleString()}`,
+      28,
+      "#e8c5ed",
+    );
+    icon(this, 332, 418, "bolt", 62, ink.yellow).setAngle(10);
+    label(this, 667, 492, "SHALL WE REPLAY?", 20, "#bd91ce");
+    graffitiButton(this, 477, 568, "RETRY", () => this.restart(), 282, {
+      tone: "primary",
+      icon: "restart",
+      height: 84,
+      fontSize: 37,
+      name: "retry",
+    });
+    graffitiButton(this, 837, 568, "RETURN TO MENU", () => this.menu(), 346, {
+      icon: "home",
+      height: 84,
+      fontSize: 25,
+      name: "menu",
+    });
   }
 }

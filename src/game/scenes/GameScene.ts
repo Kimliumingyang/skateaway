@@ -21,7 +21,8 @@ import {
 } from "../systems/Physics";
 import { layoutRoofItems, HAZARDS, type LevelItemType } from "../systems/LevelItems";
 import { Player } from "../entities/Player";
-import { label, artButton } from "../ui/Controls";
+import { label } from "../ui/Controls";
+import { marker, graffitiButton, iconButton } from "../ui/Graffiti";
 import { save } from "../systems/SaveManager";
 import { audio } from "../systems/AudioManager";
 import { TrickCombo } from "../systems/TrickCombo";
@@ -54,13 +55,13 @@ export class GameScene extends Phaser.Scene {
   sky!: Phaser.GameObjects.TileSprite;
   far!: Phaser.GameObjects.TileSprite;
   hud!: Phaser.GameObjects.Text;
+  hudCoins!: Phaser.GameObjects.Text;
   best!: Phaser.GameObjects.Text;
   tick = 0;
   tricks = new TrickCombo();
   trickStarted = -1;
   trickHint!: Phaser.GameObjects.Text;
-  trickButton!: Phaser.GameObjects.Rectangle;
-  trickButtonText!: Phaser.GameObjects.Text;
+  trickButton!: Phaser.GameObjects.Container;
   hintUntil = 0;
   constructor() {
     super("Game");
@@ -93,12 +94,14 @@ export class GameScene extends Phaser.Scene {
       .setScrollFactor(0);
     this.sky.setTileScale(HEIGHT / 1334);
     this.far.setTileScale(HEIGHT / 1336);
-    this.hud = label(this, 190, 64, "", 40, "#eeff42").setDepth(21);
+    this.hud = marker(this, 58, 48, "", 52).setOrigin(0,0.5).setDepth(21);
+    this.hudCoins = label(this, 58, 106, "", 37, "#ca82d0").setOrigin(0,0.5).setDepth(21)
+      .setStroke("#28113c", 3);
     this.hud.setStroke("#28113c", 5);
-    this.best = label(this, WIDTH - 360, 60, `BEST ${save.data.best}`, 20).setDepth(
+    this.best = label(this, WIDTH - 360, 52, `BEST ${save.data.best}`, 27).setDepth(
       21,
     );
-    artButton(this, WIDTH - 96, 66, "btn_pause", () => this.pause(), 90).setDepth(21);
+    iconButton(this, WIDTH - 96, 66, "pause", () => this.pause(), 90).setDepth(21);
     label(
       this,
       WIDTH / 2,
@@ -110,18 +113,11 @@ export class GameScene extends Phaser.Scene {
     this.addRoof({ x: -100, y: START_ROOF_Y, w: deckWidth(START_ROOF_Y, 1), kind: 1 });
     this.populateUntil(WIDTH + 800);
     this.player = new Player(this);
-    this.trickHint = label(this, 300, 170, "", 32, "#eeff42").setDepth(21)
+    this.trickHint = marker(this, 300, 190, "", 30).setDepth(21)
       .setStroke("#28113c", 4);
-    this.trickButton = this.add.rectangle(WIDTH - 160, HEIGHT - 144, 260, 115, 0x36116c)
-      .setStrokeStyle(3, 0xbc6bff).setScrollFactor(0).setDepth(21)
-      .setInteractive({ useHandCursor: true });
-    this.trickButtonText = label(this, WIDTH - 160, HEIGHT - 144, "TRICK · J", 34)
-      .setDepth(22);
-    this.trickButton.on("pointerdown", (_p: Phaser.Input.Pointer, _x: number, _y: number,
-      event: Phaser.Types.Input.EventData) => {
-      event.stopPropagation();
-      this.performTrick();
-    });
+    this.trickButton = graffitiButton(this, WIDTH - 160, HEIGHT - 144, "TRICK · J",
+      () => this.performTrick(), 260, { tone: "primary", icon: "bolt", height: 108,
+        fontSize: 31, name: "trick", trigger: "down" }).setDepth(21);
     const jump = () => {
       if (!this.dead) this.motion.requestJump();
     };
@@ -243,7 +239,6 @@ export class GameScene extends Phaser.Scene {
     this.player.pose(this.motion.grounded, this.motion.vy, this.tick * 1000,
       this.trickStarted < 0 ? -1 : this.tick - this.trickStarted);
     this.trickButton.setAlpha(!this.motion.grounded && !this.tricks.pending ? 1 : 0.55);
-    this.trickButtonText.setAlpha(this.trickButton.alpha);
     if (this.tick >= this.hintUntil) this.trickHint.setText("");
     this.cameras.main.scrollX = x - PLAYER_SCREEN_X;
     // Fixed vertical camera keeps every building base on the bottom pixel.
@@ -251,8 +246,9 @@ export class GameScene extends Phaser.Scene {
     this.sky.tilePositionX = 0;
     this.far.tilePositionX = this.distance * 0.06;
     this.hud.setText(
-      `${String(this.score).padStart(6, "0")}\n${this.coins} COINS`,
+      String(this.score).padStart(6, "0"),
     );
+    this.hudCoins.setText(`${this.coins} COINS`);
     this.best.setText(
       `BEST ${Math.max(save.data.best, this.score)}\n${Math.floor(this.distance / 10)} m`,
     );
@@ -344,6 +340,7 @@ export class GameScene extends Phaser.Scene {
     this.trickHint.setText("");
     this.updateScore();
     audio.tone("death");
+    if (save.data.vibration) navigator.vibrate?.(80);
     this.cameras.main.shake(180, 0.009);
     this.burst(this.motion.x, this.motion.y - 65, 0xff3dbf);
     save.finish(this.score, this.coins);
