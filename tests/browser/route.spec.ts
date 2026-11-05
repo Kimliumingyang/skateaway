@@ -1,3 +1,4 @@
+import { clickUI } from "./ui-helpers";
 import { test, expect } from "@playwright/test";
 
 for (const viewport of [{ width: 1334, height: 750 }, { width: 844, height: 390 }]) {
@@ -75,8 +76,7 @@ for (const viewport of [{ width: 1334, height: 750 }, { width: 844, height: 390 
       const g = (window as any).skateaway.scene.getScene("Game");
       return g.replayShownAt - g.crashCompletedAt;
     })).toBeGreaterThanOrEqual(390);
-    const box = (await page.locator("canvas").boundingBox())!;
-    await page.touchscreen.tap(box.x + 667 / 1334 * box.width, box.y + 505 / 750 * box.height);
+    await clickUI(page, "Overlay", "retry");
     await page.waitForFunction(() => (window as any).skateaway.scene.isActive("Game"));
     expect(await page.evaluate(() => {
       const g = (window as any).skateaway.scene.getScene("Game");

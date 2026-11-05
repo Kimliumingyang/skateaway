@@ -8,7 +8,8 @@ export function fitMenuLayout(scene: Phaser.Scene) {
 }
 
 export const textStyle = {
-  fontFamily: "Arial, sans-serif",
+  fontFamily: '"Kalam", Arial, sans-serif',
+  fontStyle: "bold",
   fontSize: "26px",
   color: "#f8f0ff",
 };

@@ -4,6 +4,7 @@ export interface SaveData {
   records: { score: number; coins: number; date: string }[];
   music: boolean;
   sfx: boolean;
+  vibration: boolean;
 }
 const defaults = (): SaveData => ({
   best: 0,
@@ -11,6 +12,7 @@ const defaults = (): SaveData => ({
   records: [],
   music: true,
   sfx: true,
+  vibration: false,
 });
 export class SaveManager {
   data: SaveData = defaults();
@@ -34,6 +36,7 @@ export class SaveManager {
             : [],
           music: typeof d.music === "boolean" ? d.music : true,
           sfx: typeof d.sfx === "boolean" ? d.sfx : true,
+          vibration: typeof d.vibration === "boolean" ? d.vibration : false,
         };
       }
     } catch {

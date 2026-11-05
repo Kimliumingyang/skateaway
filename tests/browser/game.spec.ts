@@ -1,4 +1,5 @@
 import { test, expect, Page } from "@playwright/test";
+import { clickUI } from "./ui-helpers";
 async function clickAt(page: Page, x: number, y: number) {
   const box = await page.locator("canvas").boundingBox();
   const px = box!.x + (x / 1334) * box!.width,
@@ -23,22 +24,22 @@ for (const viewport of [
     await page.goto("/");
     await scene(page, "Menu");
     await page.screenshot({ path: `work/menu-${viewport.width}.png` });
-    await clickAt(page, 795, 580);
+    await clickUI(page, "Menu", "settings");
     await scene(page, "Overlay");
-    await clickAt(page, 805, 300);
+    await clickUI(page, "Overlay", "music");
     expect(
       await page.evaluate(
         () => JSON.parse(localStorage.getItem("skateaway.v1")!).music,
       ),
     ).toBe(false);
-    await clickAt(page, 667, 590);
-    await clickAt(page, 1065, 580);
+    await clickUI(page, "Overlay", "close");
+    await clickUI(page, "Menu", "ranking");
     await scene(page, "Overlay");
-    await clickAt(page, 667, 625);
+    await clickUI(page, "Overlay", "close-ranking");
     const bounds = await page.locator("canvas").boundingBox();
     expect(bounds!.height).toBeLessThanOrEqual(viewport.height + 1);
     expect(bounds!.width).toBeLessThanOrEqual(viewport.width + 1);
-    await clickAt(page, 930, 365);
+    await clickUI(page, "Menu", "play");
     await scene(page, "Game");
     await page.keyboard.press("Space");
     await page.waitForTimeout(80);
@@ -72,7 +73,7 @@ for (const viewport of [
         () => (window as any).skateaway.scene.getScene("Game").distance,
       ),
     ).toBe(d);
-    await clickAt(page, 667, 275);
+    await clickUI(page, "Overlay", "resume");
     await scene(page, "Game");
     await page.screenshot({ path: `work/game-${viewport.width}.png` });
     const grounded = await page.evaluate(() => {
@@ -117,7 +118,7 @@ for (const viewport of [
         () => JSON.parse(localStorage.getItem("skateaway.v1")!).records.length,
       ),
     ).toBe(1);
-    await clickAt(page, 667, 505);
+    await clickUI(page, "Overlay", "retry");
     await scene(page, "Game");
     expect(
       await page.evaluate(
@@ -131,7 +132,7 @@ for (const viewport of [
         () => JSON.parse(localStorage.getItem("skateaway.v1")!).records.length,
       ),
     ).toBe(2);
-    await clickAt(page, 667, 625);
+    await clickUI(page, "Overlay", "menu");
     await scene(page, "Menu");
     await page.reload();
     await scene(page, "Menu");

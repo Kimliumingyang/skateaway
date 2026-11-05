@@ -1,3 +1,14 @@
+@font-face {
+  font-family: "Permanent Marker";
+  src: url("/assets/fonts/PermanentMarker-Regular.woff") format("woff");
+  font-display: swap;
+}
+@font-face {
+  font-family: "Kalam";
+  src: url("/assets/fonts/Kalam-Bold.woff") format("woff");
+  font-weight: 700;
+  font-display: swap;
+}
 * {
   box-sizing: border-box;
 }

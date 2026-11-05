@@ -3,6 +3,10 @@ class AudioManager {
   music = new Audio(`${import.meta.env.BASE_URL}assets/music.mp3`);
   context?: AudioContext;
   unlocked = false;
+  coinBuffer?: AudioBuffer;
+  coinLoading?: Promise<void>;
+  coinVoices = new Set<AudioBufferSourceNode>();
+  lastCoin = -1;
   constructor() {
     this.music.loop = true;
     this.music.volume = 0.32;
@@ -12,16 +16,53 @@ class AudioManager {
     try {
       this.context ??= new AudioContext();
       void this.context.resume().catch(() => {});
+      void this.loadCoin();
     } catch {}
     this.sync();
   }
+  loadCoin() {
+    if (this.coinBuffer || !this.context) return;
+    const context = this.context;
+    this.coinLoading ??= fetch(`${import.meta.env.BASE_URL}assets/sfx/coin.wav`)
+      .then(response => {
+        if (!response.ok) throw new Error("Coin SFX unavailable");
+        return response.arrayBuffer();
+      })
+      .then(data => context.decodeAudioData(data))
+      .then(buffer => { this.coinBuffer = buffer; })
+      .catch(() => { this.coinLoading = undefined; });
+    return this.coinLoading;
+  }
+  playCoin() {
+    const context = this.context!;
+    if (context.currentTime - this.lastCoin < 0.035) return;
+    this.lastCoin = context.currentTime;
+    if (this.coinVoices.size >= 4) {
+      const oldest = this.coinVoices.values().next().value!;
+      this.coinVoices.delete(oldest);
+      oldest.stop();
+    }
+    const source = context.createBufferSource();
+    const gain = context.createGain();
+    source.buffer = this.coinBuffer!;
+    gain.gain.value = 0.22;
+    source.connect(gain).connect(context.destination);
+    this.coinVoices.add(source);
+    source.onended = () => { this.coinVoices.delete(source); source.disconnect(); gain.disconnect(); };
+    source.start();
+  }
   sync() {
+    if (!save.data.sfx || document.hidden) {
+      for (const voice of this.coinVoices) voice.stop();
+      this.coinVoices.clear();
+    }
     if (this.unlocked && save.data.music && !document.hidden)
       void this.music.play().catch(() => {});
     else this.music.pause();
   }
   tone(kind: "jump" | "coin" | "land" | "death") {
     if (!save.data.sfx || !this.context) return;
+    if (kind === "coin" && this.coinBuffer) { this.playCoin(); return; }
     const ctx = this.context,
       o = ctx.createOscillator(),
       g = ctx.createGain();

@@ -1,9 +1,6 @@
+import { clickUI } from "./ui-helpers";
 import { test, expect, type Page } from "@playwright/test";
 
-async function tap(page: Page, x: number, y: number) {
-  const box = (await page.locator("canvas").boundingBox())!;
-  await page.touchscreen.tap(box.x + x / 1334 * box.width, box.y + y / 750 * box.height);
-}
 async function state(page: Page) {
   return page.evaluate(() => {
     const g = (window as any).skateaway.scene.getScene("Game");
@@ -29,7 +26,7 @@ for (const viewport of [{ width: 1440, height: 900 }, { width: 844, height: 390 
     page.on("pageerror", e => errors.push(e.message));
     await page.goto("/");
     await page.waitForFunction(() => (window as any).skateaway?.scene.isActive("Menu"));
-    await tap(page, 930, 365);
+    await clickUI(page, "Menu", "play");
     await page.waitForFunction(() => (window as any).skateaway.scene.isActive("Game"));
     // Freeze automatic stepping, retain real Phaser input and production collision logic.
     await page.evaluate(() => {
@@ -48,13 +45,13 @@ for (const viewport of [{ width: 1440, height: 900 }, { width: 844, height: 390 
       await jumpKey(page);
       await step(page);
       if (flight % 2) await page.keyboard.press("j", { delay: 40 });
-      else await tap(page, 1224, 650);
+      else await clickUI(page, "Game", "trick");
       await page.waitForFunction(() => (window as any).skateaway.scene.getScene("Game").tricks.pending);
       expect((await state(page)).pending).toBe(true);
       expect((await state(page)).buffer).toBe(0); // Trick touch must not trigger jump.
       const before = (await state(page)).points;
       await page.keyboard.press("j", { delay: 40 });
-      await tap(page, 1224, 650);
+      await clickUI(page, "Game", "trick");
       expect((await state(page)).points).toBe(before);
       await jumpKey(page);
       await step(page);
@@ -80,7 +77,7 @@ for (const viewport of [{ width: 1440, height: 900 }, { width: 844, height: 390 
     await page.keyboard.press("p");
     await page.waitForFunction(() => (window as any).skateaway.scene.isPaused("Game"));
     expect((await state(page)).pending).toBe(true);
-    await tap(page, 667, 275);
+    await clickUI(page, "Overlay", "resume");
     await page.waitForFunction(() => (window as any).skateaway.scene.isActive("Game"));
     // Landing and hazard on the same step must discard the pending award.
     await page.evaluate(() => {
@@ -92,7 +89,7 @@ for (const viewport of [{ width: 1440, height: 900 }, { width: 844, height: 390 
     await step(page);
     expect(await state(page)).toMatchObject({ dead: true, pending: false, combo: 0, points: 2000 });
     await page.waitForFunction(() => (window as any).skateaway.scene.isActive("Overlay"));
-    await tap(page, 667, 505);
+    await clickUI(page, "Overlay", "retry");
     await page.waitForFunction(() => (window as any).skateaway.scene.isActive("Game"));
     expect(await state(page)).toMatchObject({ pending: false, combo: 0, points: 0, dead: false });
     // A pending trick is also cancelled by the actual fall death path.
