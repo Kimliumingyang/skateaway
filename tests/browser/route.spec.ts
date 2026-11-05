@@ -11,7 +11,7 @@ for (const viewport of [{ width: 1334, height: 750 }, { width: 844, height: 390 
     await page.waitForFunction(() => (window as any).skateaway.scene.isActive("Game"));
     const opening = await page.evaluate(() => {
       const g = (window as any).skateaway.scene.getScene("Game");
-      g.populateUntil(4000);
+      g.populateUntil(6500);
       return {
         kinds: g.roofs.slice(0, 3).map((view: any) => view.roof.kind),
         heights: g.roofs.slice(0, 3).map((view: any) => view.roof.y),
@@ -24,15 +24,15 @@ for (const viewport of [{ width: 1334, height: 750 }, { width: 844, height: 390 
       };
     });
     expect(opening.kinds).toEqual([1, 2, 6]);
-    expect(opening.heights).toEqual([440, 440, 380]);
-    expect(opening.height).toBeCloseTo(160);
-    expect(opening.canvas).toEqual([1334, 750]);
-    expect(opening.roofScreenY).toBeCloseTo(500);
-    expect(opening.crashScale).toBeCloseTo(160 / 324);
-    expect(opening.width).toBeLessThanOrEqual(160);
+    expect(opening.heights).toEqual([720, 720, 640]);
+    expect(opening.height).toBeCloseTo(180);
+    expect(opening.canvas).toEqual([1920, 1080]);
+    expect(opening.roofScreenY).toBeCloseTo(720);
+    expect(opening.crashScale).toBeCloseTo(180 / 324);
+    expect(opening.width).toBeLessThanOrEqual(180);
     expect(opening.coins.length).toBeGreaterThan(5);
     for (let i = 1; i < opening.coins.length; i++)
-      expect(opening.coins[i] - opening.coins[i - 1]).toBeCloseTo(240);
+      expect(opening.coins[i] - opening.coins[i - 1]).toBeCloseTo(300);
     await page.waitForFunction(() => (window as any).skateaway.scene.getScene("Game").coins > 0);
     await page.keyboard.press("Space");
     await page.waitForTimeout(90);
@@ -48,8 +48,8 @@ for (const viewport of [{ width: 1334, height: 750 }, { width: 844, height: 390 
     await page.evaluate(() => {
       const g = (window as any).skateaway.scene.getScene("Game");
       const x = g.motion.x;
-      g.motion.y = 500;
-      g.roofModels = [{ x: x + 19, y: 380, w: 1000, kind: 6 }];
+      g.motion.y = 800;
+      g.roofModels = [{ x: x + 19, y: 640, w: 1000, kind: 6 }];
       g.player.crashArt.once("animationcomplete", () => { g.crashCompletedAt = g.time.now; });
       (window as any).skateaway.scene.getScene("Overlay").events.once("create", () => {
         g.replayShownAt = g.time.now;

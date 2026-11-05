@@ -1,6 +1,6 @@
-import { deckWidth } from "../WorldConfig.ts";
-export const GRAVITY = 1900;
-export const JUMP = 650;
+import { deckWidth, START_ROOF_Y, HIGH_ROOF_Y } from "../WorldConfig.ts";
+export const GRAVITY = 2700;
+export const JUMP = 920;
 export const COYOTE = 0.1;
 export const BUFFER = 0.12;
 export const STEP = 1 / 120;
@@ -12,7 +12,7 @@ export interface Roof {
 }
 export class PlayerMotion {
   x = 240;
-  y = 440;
+  y = START_ROOF_Y;
   vy = 0;
   jumps = 0;
   grounded = true;
@@ -64,7 +64,7 @@ export class PlayerMotion {
   }
 }
 export function speedAt(distance: number) {
-  return Math.min(420, 290 + distance / 220);
+  return Math.min(600, 430 + distance / 300);
 }
 /** Conservative single jump at worst (highest) next roof, with 100px landing reserve.
  * Every gap is less than 45% of that flight range. Double jump adds recovery margin. */
@@ -82,7 +82,7 @@ export class PlatformGenerator {
   next(previous: Roof, speed: number): Roof {
     this.index++;
     // Long bridge → medium platform at the same height, then high / low beats.
-    const y = this.index === 1 ? 440 : this.index % 2 === 0 ? 380 : 440;
+    const y = this.index === 1 ? START_ROOF_Y : this.index % 2 === 0 ? HIGH_ROOF_Y : START_ROOF_Y;
     const gap = safeGap(
       speed,
       previous.y - y,

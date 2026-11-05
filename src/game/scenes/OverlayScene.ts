@@ -1,5 +1,5 @@
 import Phaser from "phaser";
-import { label, button, artButton } from "../ui/Controls";
+import { label, button, artButton, fitMenuLayout } from "../ui/Controls";
 import { save } from "../systems/SaveManager";
 import { audio } from "../systems/AudioManager";
 type Mode = "pause" | "settings" | "ranking" | "over";
@@ -140,6 +140,7 @@ export class OverlayScene extends Phaser.Scene {
       button(this, 667, 625, "RETURN TO MENU", () => this.menu());
     }
     label(this, 667, 728, "YiDD STUDIO / SKATEAWAY", 16, "#a17cc1");
+    fitMenuLayout(this);
   }
   menu() {
     this.scene.stop("Game");

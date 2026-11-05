@@ -1,13 +1,15 @@
-export const WIDTH = 1334;
-export const HEIGHT = 750;
-export const GROUND = 700;
-export const PLAYER_SCREEN_X = 140;
-/** Reference composition within the unchanged 1334×750 canvas. */
-export const PLAYER_HEIGHT = 160;
+export const WIDTH = 1920;
+export const HEIGHT = 1080;
+export const GROUND = HEIGHT;
+export const PLAYER_SCREEN_X = 220;
+/** Full-HD composition: small skater, clear forward view, grounded buildings. */
+export const PLAYER_HEIGHT = 180;
 export const PLAYER_BODY_HEIGHT = PLAYER_HEIGHT * 0.8;
-export const COIN_SPACING = 240;
-export const COIN_FOOT_OFFSET = 24;
-export const CAMERA_BASE_Y = -60;
+export const COIN_SPACING = 300;
+export const COIN_FOOT_OFFSET = 74;
+export const START_ROOF_Y = 720;
+export const HIGH_ROOF_Y = 640;
+export const CAMERA_BASE_Y = 0;
 /** Measured source-space walkable decks; images retain their original aspect ratio. */
 export const DECKS: Record<
   number,

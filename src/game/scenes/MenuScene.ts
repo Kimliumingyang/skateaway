@@ -1,5 +1,5 @@
 import Phaser from "phaser";
-import { label, artButton } from "../ui/Controls";
+import { label, artButton, fitMenuLayout } from "../ui/Controls";
 import { save } from "../systems/SaveManager";
 import { audio } from "../systems/AudioManager";
 export class MenuScene extends Phaser.Scene {
@@ -76,5 +76,6 @@ export class MenuScene extends Phaser.Scene {
         "Storage unavailable · progress lasts this session",
         16,
       );
+    fitMenuLayout(this);
   }
 }

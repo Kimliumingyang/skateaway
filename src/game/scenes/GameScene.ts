@@ -8,6 +8,7 @@ import {
   PLAYER_BODY_HEIGHT,
   COIN_FOOT_OFFSET,
   CAMERA_BASE_Y,
+  START_ROOF_Y,
   deckScale,
   deckWidth,
 } from "../WorldConfig";
@@ -18,7 +19,7 @@ import {
   speedAt,
   type Roof,
 } from "../systems/Physics";
-import { layoutRoofItems, type LevelItemType } from "../systems/LevelItems";
+import { layoutRoofItems, HAZARDS, type LevelItemType } from "../systems/LevelItems";
 import { Player } from "../entities/Player";
 import { label, artButton } from "../ui/Controls";
 import { save } from "../systems/SaveManager";
@@ -87,42 +88,34 @@ export class GameScene extends Phaser.Scene {
       .setOrigin(0)
       .setScrollFactor(0);
     this.far = this.add
-      .tileSprite(0, 50, WIDTH, 650, "skyline")
+      .tileSprite(0, 0, WIDTH, HEIGHT, "skyline")
       .setOrigin(0)
       .setScrollFactor(0);
     this.sky.setTileScale(HEIGHT / 1334);
-    this.far.setTileScale(650 / 1336);
-    this.add
-      .rectangle(WIDTH / 2, GROUND + 25, WIDTH, 50, 0x120d24)
-      .setScrollFactor(0)
-      .setDepth(4);
-    this.add
-      .rectangle(WIDTH / 2, GROUND + 2, WIDTH, 4, 0xeb38d5)
-      .setScrollFactor(0)
-      .setDepth(4);
-    this.hud = label(this, 150, 48, "", 30, "#eeff42").setDepth(21);
+    this.far.setTileScale(HEIGHT / 1336);
+    this.hud = label(this, 190, 64, "", 40, "#eeff42").setDepth(21);
     this.hud.setStroke("#28113c", 5);
-    this.best = label(this, 1045, 43, `BEST ${save.data.best}`, 20).setDepth(
+    this.best = label(this, WIDTH - 360, 60, `BEST ${save.data.best}`, 20).setDepth(
       21,
     );
-    artButton(this, 1268, 47, "btn_pause", () => this.pause(), 64).setDepth(21);
+    artButton(this, WIDTH - 96, 66, "btn_pause", () => this.pause(), 90).setDepth(21);
     label(
       this,
       WIDTH / 2,
-      727,
+      HEIGHT - 28,
       "TAP / SPACE · JUMP    ×2 · DOUBLE JUMP    J · TRICK    P / ESC · PAUSE",
-      18,
+      24,
       "#e6cdf8",
     ).setDepth(20);
-    this.addRoof({ x: -100, y: 440, w: deckWidth(440, 1), kind: 1 });
-    this.populateUntil(2500);
+    this.addRoof({ x: -100, y: START_ROOF_Y, w: deckWidth(START_ROOF_Y, 1), kind: 1 });
+    this.populateUntil(WIDTH + 800);
     this.player = new Player(this);
-    this.trickHint = label(this, 200, 130, "", 26, "#eeff42").setDepth(21)
+    this.trickHint = label(this, 300, 170, "", 32, "#eeff42").setDepth(21)
       .setStroke("#28113c", 4);
-    this.trickButton = this.add.rectangle(WIDTH - 110, HEIGHT - 100, 180, 80, 0x36116c)
+    this.trickButton = this.add.rectangle(WIDTH - 160, HEIGHT - 144, 260, 115, 0x36116c)
       .setStrokeStyle(3, 0xbc6bff).setScrollFactor(0).setDepth(21)
       .setInteractive({ useHandCursor: true });
-    this.trickButtonText = label(this, WIDTH - 110, HEIGHT - 100, "TRICK · J", 26)
+    this.trickButtonText = label(this, WIDTH - 160, HEIGHT - 144, "TRICK · J", 34)
       .setDepth(22);
     this.trickButton.on("pointerdown", (_p: Phaser.Input.Pointer, _x: number, _y: number,
       event: Phaser.Types.Input.EventData) => {
@@ -133,7 +126,7 @@ export class GameScene extends Phaser.Scene {
       if (!this.dead) this.motion.requestJump();
     };
     const pointer = (p: Phaser.Input.Pointer) => {
-      if (p.y > 100) jump();
+      if (p.y > 140) jump();
     };
     const key = (e: KeyboardEvent) => {
       if (e.repeat) return;
@@ -204,8 +197,11 @@ export class GameScene extends Phaser.Scene {
       .setActive(true)
       .setDepth(5)
       .setAlpha(1);
-    const width = type === "coin" ? 43 : type === "banana" ? 56 : 62;
-    sprite.setScale(width / sprite.width);
+    if (type === "coin") sprite.setScale(48 / sprite.width);
+    else {
+      const size = HAZARDS[type];
+      sprite.setScale(size.height / sprite.height);
+    }
     this.items.push({ x, y, type, active: true, sprite });
   }
   populateUntil(x: number) {
@@ -250,10 +246,10 @@ export class GameScene extends Phaser.Scene {
     this.trickButtonText.setAlpha(this.trickButton.alpha);
     if (this.tick >= this.hintUntil) this.trickHint.setText("");
     this.cameras.main.scrollX = x - PLAYER_SCREEN_X;
-    // Lower the roof line to y≈500; only follow vertically when a jump would reach the HUD.
-    this.cameras.main.scrollY = Math.min(CAMERA_BASE_Y, this.motion.y - PLAYER_HEIGHT - 110);
-    this.sky.tilePositionX = this.distance * 0.08;
-    this.far.tilePositionX = this.distance * 0.23;
+    // Fixed vertical camera keeps every building base on the bottom pixel.
+    this.cameras.main.scrollY = CAMERA_BASE_Y;
+    this.sky.tilePositionX = 0;
+    this.far.tilePositionX = this.distance * 0.06;
     this.hud.setText(
       `${String(this.score).padStart(6, "0")}\n${this.coins} COINS`,
     );
@@ -300,8 +296,8 @@ export class GameScene extends Phaser.Scene {
           this.burst(item.x, item.y, 0xeeff42);
         }
       } else {
-        const h = item.type === "banana" ? 28 : 65;
-        if (dx < 36 && foot > item.y - h + 8 && foot - PLAYER_BODY_HEIGHT < item.y - 5) {
+        const h = HAZARDS[item.type].height;
+        if (dx < HAZARDS[item.type].width * 0.38 + 15 && foot > item.y - h + 8 && foot - PLAYER_BODY_HEIGHT < item.y - 5) {
           this.die();
           break;
         }

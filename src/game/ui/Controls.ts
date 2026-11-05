@@ -1,4 +1,12 @@
 import Phaser from "phaser";
+import { WIDTH } from "../WorldConfig";
+
+/** Keep the supplied menu layout while fitting the new 16:9 logical canvas. */
+export function fitMenuLayout(scene: Phaser.Scene) {
+  const children = scene.children.getChildren().slice();
+  scene.add.container(0, 0, children).setScale(WIDTH / 1334);
+}
+
 export const textStyle = {
   fontFamily: "Arial, sans-serif",
   fontSize: "26px",

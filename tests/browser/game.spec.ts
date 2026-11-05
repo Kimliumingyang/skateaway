@@ -78,7 +78,7 @@ for (const viewport of [
     const grounded = await page.evaluate(() => {
       const g = (window as any).skateaway.scene.getScene("Game");
       return g.roofs.every(
-        (p: any) => Math.abs(p.art.y + p.art.displayHeight - 700) < 0.01,
+        (p: any) => Math.abs(p.art.y + p.art.displayHeight - 1080) < 0.01,
       );
     });
     expect(grounded).toBe(true);

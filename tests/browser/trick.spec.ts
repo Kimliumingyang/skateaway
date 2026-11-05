@@ -11,6 +11,10 @@ async function state(page: Page) {
       jumps: g.motion.jumps, hint: g.trickHint.text, dead: g.dead, buffer: g.motion.buffer };
   });
 }
+async function jumpKey(page: Page) {
+  await page.keyboard.press("Space", { delay: 40 });
+  await page.waitForFunction(() => (window as any).skateaway.scene.getScene("Game").motion.buffer > 0, null, { timeout: 4000 });
+}
 async function step(page: Page, count = 1) {
   await page.evaluate((n) => {
     const g = (window as any).skateaway.scene.getScene("Game");
@@ -30,30 +34,32 @@ for (const viewport of [{ width: 1440, height: 900 }, { width: 844, height: 390 
     // Freeze automatic stepping, retain real Phaser input and production collision logic.
     await page.evaluate(() => {
       const g = (window as any).skateaway.scene.getScene("Game");
-      g.update = () => {};
+      g.sys.sceneUpdate = () => {};
+      g.populateUntil = () => {};
       g.items.forEach((item: any) => item.sprite.setVisible(false));
       g.items = [];
       g.roofs = [g.roofs[0]];
       g.roofs[0].roof.w = 100000;
       g.roofModels = [g.roofs[0].roof];
     });
-    await page.keyboard.press("j");
+    await page.keyboard.press("j", { delay: 40 });
     expect((await state(page)).pending).toBe(false);
     for (let flight = 1; flight <= 6; flight++) {
-      await page.keyboard.press("Space");
+      await jumpKey(page);
       await step(page);
-      if (flight % 2) await page.keyboard.press("j");
+      if (flight % 2) await page.keyboard.press("j", { delay: 40 });
       else await tap(page, 1224, 650);
+      await page.waitForFunction(() => (window as any).skateaway.scene.getScene("Game").tricks.pending);
       expect((await state(page)).pending).toBe(true);
       expect((await state(page)).buffer).toBe(0); // Trick touch must not trigger jump.
       const before = (await state(page)).points;
-      await page.keyboard.press("j");
+      await page.keyboard.press("j", { delay: 40 });
       await tap(page, 1224, 650);
       expect((await state(page)).points).toBe(before);
-      await page.keyboard.press("Space");
+      await jumpKey(page);
       await step(page);
       expect((await state(page)).jumps).toBe(2);
-      await page.keyboard.press("Space");
+      await jumpKey(page);
       await step(page);
       expect((await state(page)).jumps).toBe(2);
       await step(page, 150);
@@ -64,13 +70,13 @@ for (const viewport of [{ width: 1440, height: 900 }, { width: 844, height: 390 
       expect(s.hint).toContain(`KICKFLIP +${100 * Math.min(flight, 5)}`);
       if (flight > 1) expect(s.hint).toContain(`COMBO ×${Math.min(flight, 5)}`);
     }
-    await page.keyboard.press("Space");
+    await jumpKey(page);
     await step(page);
     await step(page, 100);
     expect((await state(page)).combo).toBe(0);
-    await page.keyboard.press("Space");
+    await jumpKey(page);
     await step(page);
-    await page.keyboard.press("j");
+    await page.keyboard.press("j", { delay: 40 });
     await page.keyboard.press("p");
     await page.waitForFunction(() => (window as any).skateaway.scene.isPaused("Game"));
     expect((await state(page)).pending).toBe(true);
@@ -79,9 +85,9 @@ for (const viewport of [{ width: 1440, height: 900 }, { width: 844, height: 390 
     // Landing and hazard on the same step must discard the pending award.
     await page.evaluate(() => {
       const g = (window as any).skateaway.scene.getScene("Game");
-      g.motion.y = 439.99;
+      g.motion.y = 719.99;
       g.motion.vy = 30;
-      g.addItem(g.motion.x + 3, 440, "cone");
+      g.addItem(g.motion.x + 3, 720, "cone");
     });
     await step(page);
     expect(await state(page)).toMatchObject({ dead: true, pending: false, combo: 0, points: 2000 });
@@ -92,9 +98,9 @@ for (const viewport of [{ width: 1440, height: 900 }, { width: 844, height: 390 
     // A pending trick is also cancelled by the actual fall death path.
     await page.evaluate(() => {
       const g = (window as any).skateaway.scene.getScene("Game");
-      g.update = () => {};
+      g.sys.sceneUpdate = () => {};
       g.motion.grounded = false;
-      g.motion.y = 709;
+      g.motion.y = 1089;
       g.performTrick();
       g.fixedUpdate(1 / 120);
     });

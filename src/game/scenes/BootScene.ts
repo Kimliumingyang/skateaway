@@ -1,5 +1,5 @@
 import Phaser from "phaser";
-import { label } from "../ui/Controls";
+import { label, fitMenuLayout } from "../ui/Controls";
 export class BootScene extends Phaser.Scene {
   constructor() {
     super("Boot");
@@ -53,6 +53,7 @@ export class BootScene extends Phaser.Scene {
       frameHeight: 412,
     });
     this.load.json("crash-data", `${import.meta.env.BASE_URL}assets/crash.json`);
+    fitMenuLayout(this);
   }
   create() {
     this.textures.get("character").add("trimmed", 0, 150, 32, 880, 1265);

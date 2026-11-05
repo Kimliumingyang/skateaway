@@ -15,7 +15,7 @@ import {
   deckScale,
   deckWidth,
 } from "../src/game/WorldConfig.ts";
-const roof = { x: -100, y: 440, w: 1000, kind: 1 };
+const roof = { x: -100, y: 720, w: 1000, kind: 1 };
 test("two jumps only, landing resets and buffered jump fires", () => {
   const p = new PlayerMotion();
   p.requestJump();
@@ -31,8 +31,8 @@ test("two jumps only, landing resets and buffered jump fires", () => {
   assert.ok(p.vy > -JUMP);
   for (let i = 0; i < 300 && !p.grounded; i++) p.step(STEP, [roof]);
   assert.equal(p.jumps, 0);
-  assert.equal(p.y, 440);
-  p.y = 439;
+  assert.equal(p.y, 720);
+  p.y = 719;
   p.vy = 200;
   p.grounded = false;
   p.jumps = 2;
@@ -71,19 +71,19 @@ test("10,000 generated roofs remain conservative and have reaction room", () => 
       GRAVITY;
     assert.ok(gap <= speed * t * 0.45 + 0.00001);
     assert.ok(n.w / speed > 0.6);
-    assert.ok(n.y >= 330 && n.y <= 470);
+    assert.ok(n.y >= 640 && n.y <= 720);
     p = n;
   }
   assert.equal(safeGap(310, 45, 500) > 0, true);
 });
 test("swept landing catches high downward velocity and does not land from below", () => {
   const p = new PlayerMotion();
-  p.y = 430;
+  p.y = 710;
   p.vy = 1500;
   p.grounded = false;
   p.step(0.02, [roof]);
-  assert.equal(p.y, 440);
-  p.y = 480;
+  assert.equal(p.y, 720);
+  p.y = 760;
   p.vy = -100;
   p.step(STEP, [roof]);
   assert.equal(p.grounded, false);
@@ -91,7 +91,7 @@ test("swept landing catches high downward velocity and does not land from below"
 
 test("all building bases share one ground line and colliders match visible decks", () => {
   const generator = new PlatformGenerator(() => 0.5);
-  let roof = { x: -100, y: 440, w: deckWidth(440, 2), kind: 2 };
+  let roof = { x: -100, y: 720, w: deckWidth(720, 2), kind: 2 };
   for (let i = 0; i < 500; i++) {
     const scale = deckScale(roof.y, roof.kind),
       deck = DECKS[roof.kind];
@@ -104,7 +104,7 @@ test("all building bases share one ground line and colliders match visible decks
 });
 test("single jump can land on each generated next roof at every speed", () => {
   const g = new PlatformGenerator(() => 0.8);
-  let current = { x: 0, y: 440, w: deckWidth(440, 2), kind: 2 };
+  let current = { x: 0, y: 720, w: deckWidth(720, 2), kind: 2 };
   for (let i = 0; i < 1000; i++) {
     const speed = speedAt(i * 100),
       next = g.next(current, speed),
@@ -132,7 +132,7 @@ test("single jump can land on each generated next roof at every speed", () => {
 
 test("opening sequence is 1 → 2 → 6, then alternating high and low roofs", () => {
   const g = new PlatformGenerator(() => 0.5);
-  let current = { x: -100, y: 440, w: deckWidth(440, 1), kind: 1 };
+  let current = { x: -100, y: 720, w: deckWidth(720, 1), kind: 1 };
   const sequence = [current];
   for (let i = 0; i < 8; i++) {
     current = g.next(current, 290);
@@ -140,5 +140,5 @@ test("opening sequence is 1 → 2 → 6, then alternating high and low roofs", (
   }
   assert.deepEqual(sequence.slice(0, 3).map(roof => roof.kind), [1, 2, 6]);
   assert.equal(sequence[0].y, sequence[1].y);
-  assert.deepEqual(sequence.slice(2).map(roof => roof.y), [380, 440, 380, 440, 380, 440, 380]);
+  assert.deepEqual(sequence.slice(2).map(roof => roof.y), [640, 720, 640, 720, 640, 720, 640]);
 });
