@@ -8,12 +8,17 @@ import {
   STEP,
   safeGap,
   speedAt,
+  difficultyAt,
+  isRecoveryAt,
+  CHUNK_TEMPLATES,
 } from "../src/game/systems/Physics.ts";
 import {
   GROUND,
   DECKS,
   deckScale,
   deckWidth,
+  BASE_RUN_SPEED,
+  MAX_RUN_SPEED,
 } from "../src/game/WorldConfig.ts";
 const roof = { x: -100, y: 720, w: 1000, kind: 1 };
 test("two jumps only, landing resets and buffered jump fires", () => {
@@ -142,4 +147,68 @@ test("opening sequence is 1 → 2 → 6, then alternating high and low roofs", (
   assert.equal(sequence[0].y, sequence[1].y);
   assert.deepEqual(sequence.map(roof => roof.kind), [1, 2, 6, 7, 6, 2, 6, 7, 6]);
   assert.deepEqual(sequence.slice(2).map(roof => roof.y), [640, 720, 640, 720, 640, 720, 640]);
+});
+
+test("elapsed director uses five tiers, finite speed and recurring recovery", () => {
+  assert.deepEqual([0, 20, 45, 75, 120].map(t => difficultyAt(t).tier),
+    ["Learn", "Flow", "Pressure", "Danger", "Survival"]);
+  assert.equal(speedAt(0, 0), BASE_RUN_SPEED);
+  assert.equal(speedAt(999999, 19.9), BASE_RUN_SPEED);
+  assert.equal(speedAt(0, 120), MAX_RUN_SPEED);
+  assert.equal(speedAt(1e9, 1e6), 570);
+  const samples = [0, 20, 45, 75, 120].map(difficultyAt);
+  for (let i = 1; i < samples.length; i++) {
+    assert.ok(samples[i].speedMultiplier > samples[i - 1].speedMultiplier);
+    assert.ok(samples[i].hazardInterval < samples[i - 1].hazardInterval);
+  }
+  for (let start = 12; start < 600; start += 14) {
+    assert.equal(isRecoveryAt(start + 1), true);
+    assert.equal(isRecoveryAt(start + 3), false);
+  }
+});
+
+test("named chunks exclude missing steam and rockets have a 25-second cooldown", () => {
+  assert.deepEqual(CHUNK_TEMPLATES.map(chunk => chunk.id), ["C01", "C02", "C03", "C04", "C05", "C06", "C07", "C08"]);
+  assert.equal(CHUNK_TEMPLATES.find(chunk => chunk.id === "C08")!.available, false);
+  const generator = new PlatformGenerator(() => 0.5);
+  let current = { x: -100, y: 720, w: deckWidth(720, 1), kind: 1 } as import("../src/game/systems/Physics.ts").Roof;
+  const pickups: number[] = [];
+  for (let i = 0; i < 200; i++) {
+    current = generator.next(current, speedAt(0, current.elapsed ?? 0));
+    assert.notEqual(current.chunk, "C08");
+    if (current.rocket) {
+      assert.ok(current.w >= 1250);
+      assert.ok(current.elapsed! >= 10);
+      pickups.push(current.elapsed!);
+    }
+  }
+  assert.ok(pickups.length > 8);
+  for (let i = 1; i < pickups.length; i++) {
+    assert.ok(pickups[i] - pickups[i - 1] >= 25);
+    assert.ok(pickups[i] - pickups[i - 1] < 40);
+  }
+});
+
+test("roofs planned at early speed remain reachable after acceleration or rocket expiry", () => {
+  for (const planningSpeed of [380, 570, 741]) {
+    for (const actualSpeed of [380, 570, 741]) {
+      const generator = new PlatformGenerator(() => 1);
+      let current = { x: 0, y: 720, w: deckWidth(720, 2), kind: 2 };
+      for (let i = 0; i < 20; i++) {
+        const next = generator.next(current, planningSpeed);
+        const player = new PlayerMotion();
+        player.x = current.x + current.w - 45;
+        player.y = current.y;
+        player.requestJump();
+        for (let step = 0; step < 180; step++) {
+          player.x += actualSpeed * STEP;
+          player.step(STEP, [current, next]);
+          if (player.grounded && player.x > next.x) break;
+        }
+        assert.ok(player.grounded && player.x > next.x && player.x < next.x + next.w,
+          `planned ${planningSpeed}, actual ${actualSpeed}, transition ${i}`);
+        current = next;
+      }
+    }
+  }
 });

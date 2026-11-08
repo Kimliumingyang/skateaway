@@ -4,7 +4,8 @@ import { test, expect, type Page } from "@playwright/test";
 async function state(page: Page) {
   return page.evaluate(() => {
     const g = (window as any).skateaway.scene.getScene("Game");
-    return { points: g.tricks.points, combo: g.tricks.combo, pending: g.tricks.pending,
+    return { points: g.tricks.points, combo: g.tricks.combo, multiplier: g.tricks.multiplier,
+      remaining: g.tricks.remaining, pending: g.tricks.pending,
       jumps: g.motion.jumps, hint: g.trickHint.text, dead: g.dead, buffer: g.motion.buffer };
   });
 }
@@ -61,16 +62,20 @@ for (const viewport of [{ width: 1440, height: 900 }, { width: 844, height: 390 
       expect((await state(page)).jumps).toBe(2);
       await step(page, 150);
       const s = await state(page);
-      expect(s.points - before).toBe(100 * Math.min(flight, 5));
-      expect(s.combo).toBe(Math.min(flight, 5));
+      const multiplier = [1, 1.5, 1.5, 2, 2, 3][flight - 1];
+      expect(s.points - before).toBe(100 * multiplier);
+      expect(s.combo).toBe(flight);
+      expect(s.multiplier).toBe(multiplier);
       expect(s.pending).toBe(false);
-      expect(s.hint).toContain(`KICKFLIP +${100 * Math.min(flight, 5)}`);
-      if (flight > 1) expect(s.hint).toContain(`COMBO ×${Math.min(flight, 5)}`);
+      expect(s.hint).toContain(`KICKFLIP +${100 * multiplier}`);
+      expect(s.hint).toContain(`COMBO ×${multiplier}`);
     }
     await jumpKey(page);
     await step(page);
     await step(page, 100);
-    expect((await state(page)).combo).toBe(0);
+    expect((await state(page)).combo).toBe(6); // A plain landing preserves the timed streak.
+    await step(page, 721);
+    expect(await state(page)).toMatchObject({ combo: 0, remaining: 0, points: 1100 });
     await jumpKey(page);
     await step(page);
     await page.keyboard.press("j", { delay: 40 });
@@ -84,10 +89,10 @@ for (const viewport of [{ width: 1440, height: 900 }, { width: 844, height: 390 
       const g = (window as any).skateaway.scene.getScene("Game");
       g.motion.y = 719.99;
       g.motion.vy = 30;
-      g.addItem(g.motion.x + 3, 720, "cone");
+      g.addItem(g.motion.x + 3, 720, "warning");
     });
     await step(page);
-    expect(await state(page)).toMatchObject({ dead: true, pending: false, combo: 0, points: 2000 });
+    expect(await state(page)).toMatchObject({ dead: true, pending: false, combo: 0, points: 1100 });
     await page.waitForFunction(() => (window as any).skateaway.scene.isActive("Overlay"));
     await clickUI(page, "Overlay", "retry");
     await page.waitForFunction(() => (window as any).skateaway.scene.isActive("Game"));

@@ -1,3 +1,5 @@
+> Historical session record. Its dimensions, rules, test counts and deployment status describe that session only. Current scope: [README](../../README.md) and [spec reconciliation](../GAMEPLAY_SPEC_RECONCILIATION.md).
+
 # 横屏、角色与落地建筑更新
 
 本轮按用户的新方向取代原先的竖屏目标，画布、菜单、HUD、暂停、设置、排行、结算均改为 1334×750 横屏，手机竖放时保留等比画面并提示旋转。
@@ -10,4 +12,4 @@
 
 预览继续通过 GitHub Pages 的 main:preview/ 发布；游戏源码保留在 feat/playable-skateaway / PR #1。仍需正式角色动画与真机长期手感测试。
 
-截图：[横屏菜单](screenshots/landscape-menu.png) · [横屏玩法](screenshots/landscape-gameplay.png)。
+截图：[横屏菜单](../screenshots/landscape-menu.png) · [横屏玩法](../screenshots/landscape-gameplay.png)。

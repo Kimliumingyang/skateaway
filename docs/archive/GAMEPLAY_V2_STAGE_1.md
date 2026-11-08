@@ -1,3 +1,5 @@
+> Historical session record. Its dimensions, rules, test counts and deployment status describe that session only. Current scope: [README](../../README.md) and [spec reconciliation](../GAMEPLAY_SPEC_RECONCILIATION.md).
+
 # Gameplay v2 第一阶段：Trick + Combo
 
 从 `feat/playable-skateaway` 的 `7558676` 创建 `feat/skateaway-gameplay-v2`。仅增加 Kickflip 和连击结算，不改动物理参数、建筑、背景、关卡生成或素材，不解压 Asset.zip。

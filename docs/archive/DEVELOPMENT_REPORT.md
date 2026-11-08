@@ -1,3 +1,5 @@
+> Historical session record. Its dimensions, rules, test counts and deployment status describe that session only. Current scope: [README](../../README.md) and [spec reconciliation](../GAMEPLAY_SPEC_RECONCILIATION.md).
+
 # SkateAway 首个可玩版本开发报告（历史记录）
 
 当前版本已按用户新方向改为横屏并接入提供的角色，最新变更与验证见 [横屏更新报告](LANDSCAPE_UPDATE.md)。
@@ -47,4 +49,4 @@ Phaser 3 + TypeScript + Vite 实际可玩游戏。自动前进、双跳、土狼
 
 PR：https://github.com/Kimliumingyang/skateaway/pull/1
 
-分支：feat/playable-skateaway。尚未合并或部署公网。截图见 [游戏](screenshots/gameplay-mobile.png)、[菜单](screenshots/menu-desktop.png)、[结算](screenshots/gameover-desktop.png)。
+分支：feat/playable-skateaway。尚未合并或部署公网。截图见 [游戏](../screenshots/gameplay-mobile.png)、[菜单](../screenshots/menu-desktop.png)、[结算](../screenshots/gameover-desktop.png)。
