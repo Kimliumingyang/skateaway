@@ -43,6 +43,7 @@ export interface Roof {
   y: number;
   w: number;
   kind: number;
+  order?: number;
   chunk?: ChunkId;
   /** Estimated encounter time at the beginning of this roof. */
   elapsed?: number;
@@ -114,6 +115,7 @@ export function safeGap(speed: number, rise: number, desired: number) {
 }
 export class PlatformGenerator {
   index = 0;
+  readonly opening = [1, 2, 4, 3, 5, 6, 4, 7, 6, 8];
   private random: () => number;
   private nextRocketAt = 10;
   constructor(random: () => number = Math.random) {
@@ -121,31 +123,40 @@ export class PlatformGenerator {
   }
   next(previous: Roof, speed: number, elapsed?: number): Roof {
     this.index++;
-    // Long bridge → medium platform at the same height, then high / low beats.
-    const y = this.index === 1 ? START_ROOF_Y : this.index % 2 === 0 ? HIGH_ROOF_Y : START_ROOF_Y;
+    // The first circuit is an authored tutorial; later circuits vary within safe templates.
+    const kind = this.index < this.opening.length
+      ? this.opening[this.index]
+      : [3, 2, 4, 7, 5, 6, 4, 3, 6, 8][(this.index - this.opening.length) % 10];
+    const y = this.index < this.opening.length
+      ? [START_ROOF_Y, START_ROOF_Y, 690, 645, 510, 510, 620, 700, 635, 520][this.index]
+      : kind === 5 ? Math.max(510, previous.y - 140)
+        : kind === 6 && previous.kind === 5 ? previous.y
+          : kind === 8 ? Math.max(500, previous.y - 130)
+            : kind === 4 || kind === 6 ? HIGH_ROOF_Y : START_ROOF_Y;
     const gap = safeGap(
       speed,
       previous.y - y,
-      85 + this.random() * 45 + Math.min(25, this.index),
+      kind === 5 ? Math.max(60, speed * 0.23 - 27) : kind === 8 ? Math.max(70, speed * 0.2 - 27) :
+        85 + this.random() * 45 + Math.min(25, this.index),
     );
     // Reintroduce a longer low platform regularly for obstacle beats, with
     // short high roofs and the alternate low roof reserved for gap recovery.
-    const kind = this.index % 2 === 0 ? 6 : this.index % 4 === 1 ? 2 : 7;
     // Height determines uniform scale and width, so every source image ends on GROUND.
     const previousElapsed = previous.elapsed ?? Math.min(0, (previous.x - PLAYER_SCREEN_X) / speed);
     const encounter = elapsed ?? previousElapsed + (previous.w + gap) / speed;
     const difficulty = difficultyAt(encounter);
     const w = deckWidth(y, kind);
     let chunk: ChunkId;
-    if (difficulty.recovery) chunk = w >= 1250 ? "C01" : "C02";
+    if (this.index < 3) chunk = "C01";
+    else if (difficulty.recovery) chunk = w >= 1250 ? "C01" : "C02";
     else if (w >= 1250) {
       // One optional route per three long roofs leaves more authored hazard beats.
       chunk = encounter >= 15 && Math.floor(this.index / 4) % 3 === 1 ? "C07" : "C03";
     } else if (difficulty.level === 1) chunk = "C02";
     else chunk = (["C04", "C05", "C06"] as const)[this.index % 3];
     if (chunk === "C04" && y !== HIGH_ROOF_Y) chunk = "C06";
-    const rocket = w >= 1250 && encounter >= this.nextRocketAt;
+    const rocket = this.index >= this.opening.length && w >= 1250 && encounter >= this.nextRocketAt;
     if (rocket) this.nextRocketAt = encounter + 25;
-    return { x: previous.x + previous.w + gap, y, w, kind, chunk, elapsed: encounter, rocket };
+    return { x: previous.x + previous.w + gap, y, w, kind, order: this.index, chunk, elapsed: encounter, rocket };
   }
 }

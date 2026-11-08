@@ -20,20 +20,24 @@ export class OverlayScene extends Phaser.Scene {
   score = 0;
   coins = 0;
   bonus = 0;
+  rookieBonus = 0;
   maxCombo = 1;
   reason = "";
+  missionSummary: string[] = [];
   constructor() {
     super("Overlay");
   }
-  init(d: { mode: Mode; origin: string; score?: number; coins?: number; bonus?: number; maxCombo?: number; reason?: string }) {
+  init(d: { mode: Mode; origin: string; score?: number; coins?: number; bonus?: number; rookieBonus?: number; maxCombo?: number; reason?: string; missionSummary?: string[] }) {
     this.mode = d.mode;
     this.origin = d.origin;
     this.returnMode = d.mode;
     this.score = d.score ?? 0;
     this.coins = d.coins ?? 0;
     this.bonus = d.bonus ?? 0;
+    this.rookieBonus = d.rookieBonus ?? 0;
     this.maxCombo = d.maxCombo ?? 1;
     this.reason = d.reason ?? "";
+    this.missionSummary = d.missionSummary ?? [];
   }
   create() {
     this.draw();
@@ -194,7 +198,8 @@ export class OverlayScene extends Phaser.Scene {
     label(this, 667, 624, "Saved automatically on this device", 21, "#bf94d2");
   }
   ranking() {
-    label(this, 667, 184, "TOP 10 · ON THIS DEVICE", 20, "#d6b1e4");
+    label(this, 667, 172, `BEST ${save.data.best} · ${save.data.bestDistance}m · ${Math.floor(save.data.longestRun)}s · COMBO ×${save.data.bestCombo}`, 20, "#d6b1e4");
+    label(this, 667, 198, `ROOKIE ${save.data.rookieCompleted.length}/7 · TOP 10 ON THIS DEVICE`, 18, "#d6b1e4");
     const data = save.data.records;
     if (!data.length) {
       icon(this, 667, 310, "crown", 66, ink.yellow);
@@ -244,12 +249,13 @@ export class OverlayScene extends Phaser.Scene {
       this,
       667,
       442,
-      `+${this.coins} COINS  +${this.bonus} MISSION BONUS  ·  BANK ${save.data.wallet.toLocaleString()}`,
+      `+${this.coins} COINS  +${this.bonus} MISSION  +${this.rookieBonus} ROOKIE  ·  BANK ${save.data.wallet.toLocaleString()}`,
       28,
       "#e8c5ed",
     );
     icon(this, 332, 418, "bolt", 62, ink.yellow).setAngle(10);
-    label(this, 667, 492, `BEST COMBO ×${this.maxCombo} · SHALL WE REPLAY?`, 20, "#bd91ce");
+    label(this, 667, 480, `BEST COMBO ×${this.maxCombo} · DISTANCE RECORD ${save.data.bestDistance}m`, 20, "#bd91ce");
+    label(this, 667, 517, this.missionSummary.join("   ·   ") || "SHALL WE REPLAY?", 18, "#bd91ce");
     graffitiButton(this, 477, 568, "RETRY", () => this.restart(), 282, {
       tone: "primary",
       icon: "restart",

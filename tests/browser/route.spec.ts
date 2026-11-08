@@ -21,11 +21,12 @@ for (const viewport of [{ width: 1334, height: 750 }, { width: 844, height: 390 
         roofScreenY: g.motion.y - g.cameras.main.scrollY,
         crashScale: g.player.crashArt.scaleX,
         canvas: [(window as any).skateaway.scale.width, (window as any).skateaway.scale.height],
-        coins: g.items.filter((item: any) => item.type === "coin").map((item: any) => item.x),
+        coins: g.items.filter((item: any) => item.type === "coin" &&
+          item.x < g.roofModels[0].x + g.roofModels[0].w).map((item: any) => item.x),
       };
     });
-    expect(opening.kinds).toEqual([1, 2, 6]);
-    expect(opening.heights).toEqual([720, 720, 640]);
+    expect(opening.kinds).toEqual([1, 2, 4]);
+    expect(opening.heights).toEqual([720, 720, 690]);
     expect(opening.height).toBeCloseTo(180);
     expect(opening.canvas).toEqual([1920, 1080]);
     expect(opening.roofScreenY).toBeCloseTo(720);

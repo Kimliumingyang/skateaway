@@ -89,7 +89,7 @@ export class MenuScene extends Phaser.Scene {
       this,
       930,
       617,
-      `BEST ${save.data.best.toLocaleString()}   ·   BANK ${save.data.wallet.toLocaleString()} COINS`,
+      `BEST ${save.data.best.toLocaleString()}   ·   BANK ${save.data.wallet.toLocaleString()} COINS   ·   ROOKIE ${save.data.rookieCompleted.length}/7`,
       23,
       "#edc9f2",
     );

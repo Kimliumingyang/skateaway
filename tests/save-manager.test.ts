@@ -141,3 +141,19 @@ test("blocked browser storage retains current-session earnings", (t) => {
   assert.equal(save.data.wallet, 50);
   assert.equal(save.data.records.length, 1);
 });
+
+test("rookie rewards settle once and personal bests remain independent", (t) => {
+  storageFor(t);
+  const save = new SaveManager();
+  assert.equal(save.unlockRookie("R01", 10), true);
+  assert.equal(save.unlockRookie("R01", 10), false);
+  assert.equal(save.data.wallet, 0);
+  save.finish(100, 2, { distance: 300, seconds: 30, maxCombo: 2, deathCause: "SEAGULL", rookieBonus: 10 });
+  assert.equal(save.data.wallet, 12);
+  assert.equal(save.data.pendingRookieBonus, 0);
+  save.finish(200, 0, { distance: 100, seconds: 60, maxCombo: 1, deathCause: "FALL" });
+  assert.deepEqual([save.data.best, save.data.bestDistance, save.data.longestRun, save.data.bestCombo],
+    [200, 300, 60, 2]);
+  assert.equal(save.data.wallet, 12);
+  assert.equal(save.data.records.find(record => record.score === 100)?.deathCause, "SEAGULL");
+});

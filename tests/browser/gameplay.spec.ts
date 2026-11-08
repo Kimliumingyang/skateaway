@@ -265,6 +265,7 @@ test("completed missions settle once, appear in results and reset on free retry"
     const g = (window as any).skateaway.scene.getScene("Game");
     for (let i = 0; i < 30; i++) g.addItem(g.motion.x + 3, g.motion.y - footOffset, "coin");
     g.fixedUpdate(1 / 120);
+    g.doubleJumps = 5;
     g.tick = 60;
     g.fixedUpdate(1 / 120);
     const missions = g.missions.missions.map((mission: any) => ({ id: mission.id, complete: mission.complete }));
@@ -277,17 +278,17 @@ test("completed missions settle once, appear in results and reset on free retry"
     return { missions, dead: g.dead, bonus: g.missionBonus, once, repeated,
       secondSettlement: g.missions.settle() };
   }, { footOffset: COIN_FOOT_OFFSET });
-  expect(settled.missions).toEqual([{ id: "coins", complete: true }, { id: "survive", complete: true }]);
-  expect(settled).toMatchObject({ dead: true, bonus: 90, secondSettlement: 0 });
-  expect(settled.once.wallet).toBe(120);
+  expect(settled.missions).toEqual([{ id: "coins15", complete: true }, { id: "double5", complete: true }]);
+  expect(settled).toMatchObject({ dead: true, bonus: 50, secondSettlement: 0 });
+  expect(settled.once.wallet).toBe(80);
   expect(settled.once.records).toHaveLength(1);
-  expect(settled.once.records[0]).toMatchObject({ coins: 30, bonus: 90 });
+  expect(settled.once.records[0]).toMatchObject({ coins: 30, bonus: 50 });
   expect(settled.repeated).toEqual(settled.once);
   await page.waitForFunction(() => (window as any).skateaway.scene.isActive("Overlay"));
   expect(await page.evaluate(() => {
     const overlay = (window as any).skateaway.scene.getScene("Overlay");
     return { coins: overlay.coins, bonus: overlay.bonus };
-  })).toEqual({ coins: 30, bonus: 90 });
+  })).toEqual({ coins: 30, bonus: 50 });
   await clickUI(page, "Overlay", "retry");
   await page.waitForFunction(() => (window as any).skateaway.scene.isActive("Game"));
   expect(await page.evaluate(() => {
@@ -295,10 +296,10 @@ test("completed missions settle once, appear in results and reset on free retry"
     return { coins: g.coins, bonus: g.missionBonus,
       complete: g.missions.missions.some((mission: any) => mission.complete),
       wallet: JSON.parse(localStorage.getItem("skateaway.v1")!).wallet };
-  })).toEqual({ coins: 0, bonus: 0, complete: false, wallet: 120 });
+  })).toEqual({ coins: 0, bonus: 0, complete: false, wallet: 80 });
   await page.evaluate(() => (window as any).skateaway.scene.getScene("Game").die("fall"));
   expect(await page.evaluate(() => {
     const saved = JSON.parse(localStorage.getItem("skateaway.v1")!);
     return { wallet: saved.wallet, records: saved.records.length };
-  })).toEqual({ wallet: 120, records: 2 });
+  })).toEqual({ wallet: 80, records: 2 });
 });
