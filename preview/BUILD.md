@@ -1,8 +1,9 @@
-# SkateAway graffiti UI + coin SFX preview
+# SkateAway documented gameplay preview
 
-Source: feat/skateaway-graffiti-ui, commit 9ca8939ed14f030b742f77812e0854fcb1f2522f (PR #6).
+Source: feat/skateaway-docs-gameplay, commit e674104bb4a9b1226aa314f4273e27cd5cfb454d (PR #7).
 Build: npm run build -- --base=./
-Play: https://kimliumingyang.github.io/skateaway/preview/?v=graffiti-ui-1
-Coin sound: https://kimliumingyang.github.io/skateaway/preview/assets/sfx/coin.wav
+Play: https://kimliumingyang.github.io/skateaway/preview/?v=gameplay-docs-20261108
 
-1920×1080; reference-inspired graffiti menus, dialogs, HUD, buttons and switches. Original 260ms coin SFX; supplied Cyan Kickflip BGM is byte-identical to existing music. Original gameplay, character, crash and city art unchanged. Fonts self-hosted with licenses. Source PR unmerged.
+38 unit tests,22 distinct browser scenarios,TypeScript,Vite production build and the /skateaway/preview/ subpath smoke test passed. Native1920×1080 layout and art preserved. Updated timed style combos,nonlethal bumps,optional platforms/routes,3s Rocket and once-only run mission rewards.
+
+Unavailable assets and deferred features are documented in ../docs/GAMEPLAY_SPEC_RECONCILIATION.md. No Star or flying/steam hazard is substituted. Source PR remains unmerged. Old unreferenced hashed JS/CSS files removed; source art kept intact.

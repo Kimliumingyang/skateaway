@@ -1,0 +1,20 @@
+> Historical session record. Its dimensions, rules, test counts and deployment status describe that session only. Current scope: [README](../../README.md) and [spec reconciliation](../GAMEPLAY_SPEC_RECONCILIATION.md).
+
+# Full-HD 画面与障碍节奏调整
+
+- 逻辑画布 1920×1080，等比适配屏幕。玩法角色高 180px（画面高度 16.7%，比上一版 21.3% 更小），摔倒图集沿用同等比例。
+- 建筑素材继续等比缩放，底部统一贴齐 y=1080。固定纵向镜头，移除旧底部遮挡条，双跳时建筑底部也不漂移。
+- 最底层天空固定，城市层仅按前景速度的 6% 产生轻微视差；原有素材不重画。
+- 金币从脚上方 24px 抬至 74px，按 300px 网格沿真实弹道排布。障碍对齐币线顶点，提示跳跃时机。
+- 开局仍为 1→2→6，之后高低交替。长桥留出约 1.8 秒起步时间，再出现路障、纸箱、香蕉皮等；长屋顶布置多次跳跃，短楼和每四段中的恢复段不堆障碍。落地点、楼边起跳点各留至少 0.85 秒空间，障碍间保留至少 1.6 秒节拍。
+- 使用现有 cone / box / banana / warning 素材，保留原图比例并使显示尺寸与碰撞范围相符。未处理 Asset.zip 或添加 Grind、Fever、任务等系统。
+- 跳跃和滑行数值按 Full-HD 世界尺寸匹配，保持约 0.68 秒单跳时长；自动滑行、二跳、Kickflip、Combo、摔倒与重试继续工作。
+- 原菜单、设置和结算布局通过统一容器等比适配新尺寸，不更换原 UI 素材。
+
+## 验证
+
+15 项单元测试覆盖地形可达性、币线弹道、障碍反应与恢复空间、Combo；浏览器验收覆盖原有流程、三种视口的 Trick / Combo、人物与画布尺寸、摔倒时序，以及一分钟实际逻辑模拟（真实碰撞，无无敌开关）连续跨多栋楼、多个障碍和拾币。浏览器环境为 Chromium，尚未进行真机测试。TypeScript 检查和相对路径生产构建通过，只有已有的 Phaser 包体积提示。
+
+测试中冻结模拟改为 Phaser 实际使用的 sys.sceneUpdate，避免旧测试只替换 scene.update、却仍在自动步进而造成键盘断言时序不稳定。真实输入与生产碰撞逻辑仍参与验收。
+
+源码修改：WorldConfig、main、GameScene、Physics、LevelItems、Controls，以及 Boot/Menu/Overlay 的布局适配。测试修改：physics、level-items、browser/game、browser/route、browser/trick；新增 browser/flow。保留全部源素材与原有动画图集。

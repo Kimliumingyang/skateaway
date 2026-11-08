@@ -1,0 +1,17 @@
+> Historical session record. Its dimensions, rules, test counts and deployment status describe that session only. Current scope: [README](../../README.md) and [spec reconciliation](../GAMEPLAY_SPEC_RECONCILIATION.md).
+
+# 按参考图调整画面内比例
+
+用户确认保留 1334×750 画布，不改成参考截图的约 3.7:1 宽屏。参考图用于人物、金币、楼面和远景的相对比例，不复制截图中的虚构分数或 ×10 连击。
+
+- 人物从 324px 高缩至 160px（约画布高度 21%），保持原图比例，正常显示约 111×160。角色屏幕横坐标从 240 调至 140，为前方留出更多视野。
+- 摔倒图集同步按 160/324 缩放，公共锚点和位移同比缩放，避免碰撞时突然变大；动画顺序、782ms 时长和播完后 400ms 停留保持原样。
+- 开局屋顶逻辑坐标仍为 y=440；镜头基准 scrollY=-60，使可见楼面落在屏幕 y=500（约三分之二处）。保留必要的顶部保护，跳跃不被 HUD 遮挡。楼房生成、碰撞平台、跳跃力度和速度不变。
+- 金币保留原有大小，中心间距从 324 改为 240，地面金币位于脚面上方 24px。跨楼与跳障碍的金币仍跟随真实跳跃弹道；拾取与障碍碰撞范围随人物比例调整。
+- 远景层从 y=170/高530 调为 y=50/高650；天空、城市和楼房仍使用现有素材。去掉 HUD 的整条深色横栏，改用文字描边；特技/Combo 提示移至左上区域。
+
+## 验证与范围
+
+14 项单元测试通过，覆盖统一金币间距、弹道与单跳可达性，以及原有 Combo。浏览器回归覆盖桌面、手机横屏/竖屏、实际画布尺寸、人物尺寸、楼面位置、金币拾取、跳跃/二跳、摔倒缩放/时序和重试。TypeScript 和相对路径生产构建通过；Phaser 主包体积提示仍存在。尚未真机验证。
+
+修改文件：WorldConfig.ts、Player.ts、GameScene.ts、LevelItems.ts，以及 tests/level-items.test.ts、tests/browser/route.spec.ts。未修改源素材、动画图集、Asset.zip 或依赖。开局 1→2→6、高低交替、Trick + Combo 与已接入摔倒动画保留；未添加后续玩法。
