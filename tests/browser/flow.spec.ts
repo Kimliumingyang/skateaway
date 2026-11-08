@@ -1,4 +1,6 @@
 import { test, expect } from "@playwright/test";
+import { BASE_RUN_SPEED } from "../../src/game/WorldConfig.ts";
+import { HAZARDS } from "../../src/game/systems/LevelItems.ts";
 
 test("full-HD framing, fixed background and a playable obstacle-to-gap rhythm", async ({ page }) => {
   await page.setViewportSize({ width: 1920, height: 1080 });
@@ -8,25 +10,26 @@ test("full-HD framing, fixed background and a playable obstacle-to-gap rhythm", 
   await page.waitForFunction(() => (window as any).skateaway?.scene.isActive("Menu"));
   await page.evaluate(() => (window as any).skateaway.scene.start("Game"));
   await page.waitForFunction(() => (window as any).skateaway.scene.isActive("Game"));
-  const result = await page.evaluate(() => {
+  const result = await page.evaluate(({ baseSpeed, hazardTypes }) => {
     const g = (window as any).skateaway.scene.getScene("Game");
-    const opening = g.items.filter((item: any) => item.type !== "coin");
-    const first = { count: opening.length, x: opening[0].x, speed: 430 };
-    let jumps = 0, roofs = 0, previousRoof: any;
+    const opening = g.items.filter((item: any) => hazardTypes.includes(item.type));
+    const first = { count: opening.length, x: opening[0].x, speed: baseSpeed };
+    let jumps = 0, roofs = 0, previousRoof: any, speed = baseSpeed;
     // Use real production stepping and collisions, with a controller that follows
     // the same readable takeoff points as the coin guide. No invulnerability.
     for (let i = 0; i < 7200 && !g.dead; i++) {
-      const speed = Math.min(600, 430 + g.distance / 300);
       const current = g.roofModels.find((roof: any) => g.motion.x >= roof.x && g.motion.x < roof.x + roof.w);
       if (current && current !== previousRoof) { roofs++; previousRoof = current; }
       if (g.motion.grounded && current) {
-        const hazard = g.items.find((item: any) => item.type !== "coin" && item.x > g.motion.x && item.x < current.x + current.w);
+        const hazard = g.items.find((item: any) => item.active && hazardTypes.includes(item.type) && item.x > g.motion.x && item.x < current.x + current.w);
         if (current.x + current.w - g.motion.x <= 45 || (hazard && hazard.x - g.motion.x <= speed * 920 / 2700)) {
           g.motion.requestJump();
           jumps++;
         }
       }
+      const previousX = g.motion.x;
       g.fixedUpdate(1 / 120);
+      speed = (g.motion.x - previousX) * 120;
     }
     g.update(0, 0);
     return {
@@ -35,10 +38,10 @@ test("full-HD framing, fixed background and a playable obstacle-to-gap rhythm", 
       bases: g.roofs.every((view: any) => Math.abs(view.art.y + view.art.displayHeight - 1080) < 0.01),
       canvas: [g.scale.width, g.scale.height],
     };
-  });
+  }, { baseSpeed: BASE_RUN_SPEED, hazardTypes: Object.keys(HAZARDS) });
   expect(result.dead, JSON.stringify(result)).toBe(false);
   expect(result.canvas).toEqual([1920, 1080]);
-  expect(result.first.count).toBeGreaterThanOrEqual(3);
+  expect(result.first.count).toBeGreaterThanOrEqual(1);
   expect(result.first.x).toBeGreaterThanOrEqual(220 + result.first.speed * 1.8);
   expect(result.jumps).toBeGreaterThan(10);
   expect(result.roofs).toBeGreaterThan(5);

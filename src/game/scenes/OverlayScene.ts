@@ -19,15 +19,21 @@ export class OverlayScene extends Phaser.Scene {
   returnMode: Mode = "pause";
   score = 0;
   coins = 0;
+  bonus = 0;
+  maxCombo = 1;
+  reason = "";
   constructor() {
     super("Overlay");
   }
-  init(d: { mode: Mode; origin: string; score?: number; coins?: number }) {
+  init(d: { mode: Mode; origin: string; score?: number; coins?: number; bonus?: number; maxCombo?: number; reason?: string }) {
     this.mode = d.mode;
     this.origin = d.origin;
     this.returnMode = d.mode;
     this.score = d.score ?? 0;
     this.coins = d.coins ?? 0;
+    this.bonus = d.bonus ?? 0;
+    this.maxCombo = d.maxCombo ?? 1;
+    this.reason = d.reason ?? "";
   }
   create() {
     this.draw();
@@ -219,7 +225,7 @@ export class OverlayScene extends Phaser.Scene {
     });
   }
   over() {
-    label(this, 667, 197, "DISTANCE + COINS + TRICKS", 20, "#dfbae9");
+    label(this, 667, 197, this.reason || "DISTANCE + COINS + STYLE", 20, "#dfbae9");
     marker(this, 650, 284, String(this.score).padStart(6, "0"), 96).setStroke(
       "#150c24",
       3,
@@ -238,12 +244,12 @@ export class OverlayScene extends Phaser.Scene {
       this,
       667,
       442,
-      `+${this.coins} COINS   ·   BANK ${save.data.wallet.toLocaleString()}`,
+      `+${this.coins} COINS  +${this.bonus} MISSION BONUS  ·  BANK ${save.data.wallet.toLocaleString()}`,
       28,
       "#e8c5ed",
     );
     icon(this, 332, 418, "bolt", 62, ink.yellow).setAngle(10);
-    label(this, 667, 492, "SHALL WE REPLAY?", 20, "#bd91ce");
+    label(this, 667, 492, `BEST COMBO ×${this.maxCombo} · SHALL WE REPLAY?`, 20, "#bd91ce");
     graffitiButton(this, 477, 568, "RETRY", () => this.restart(), 282, {
       tone: "primary",
       icon: "restart",

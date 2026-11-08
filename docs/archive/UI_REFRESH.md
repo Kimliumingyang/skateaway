@@ -1,3 +1,5 @@
+> Historical session record. Its dimensions, rules, test counts and deployment status describe that session only. Current scope: [README](../../README.md) and [spec reconciliation](../GAMEPLAY_SPEC_RECONCILIATION.md).
+
 # Graffiti UI + coin sound refresh
 
 基于 feat/skateaway-1080-flow 的 dda1f7f，开发分支 feat/skateaway-graffiti-ui。沿用当前 1920×1080 逻辑画布、人物比例、关卡和玩法，只调整交互界面并增加原创金币音效。

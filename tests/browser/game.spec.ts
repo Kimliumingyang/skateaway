@@ -104,7 +104,7 @@ for (const viewport of [
     // Exercise hazard collision on the currently occupied roof.
     await page.evaluate(() => {
       const g = (window as any).skateaway.scene.getScene("Game");
-      g.addItem(g.motion.x + 8, g.motion.y, "cone");
+      g.addItem(g.motion.x + 8, g.motion.y, "warning");
     });
     await scene(page, "Overlay");
     expect(

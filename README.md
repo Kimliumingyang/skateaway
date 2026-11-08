@@ -1,53 +1,59 @@
 # SkateAway · YiDD Studio
 
-A playable landscape HTML5 rooftop runner built with Phaser 3, TypeScript and Vite. Original artwork is preserved under `Asset/`; ASCII-named runtime copies live in `public/assets/`.
+A playable HTML5 rooftop skateboarding game built with Phaser 3, TypeScript and Vite. The logical canvas is **1920×1080**, with proportional scaling and letterboxing on desktop and mobile. Supplied source artwork stays under `Asset/`; ASCII-named runtime copies live in `public/assets/`.
+
+The current gameplay upgrade follows the two supplied design PDFs. [Gameplay decisions and delivery status](docs/GAMEPLAY_SPEC_RECONCILIATION.md) distinguish the intended scope, missing assets and verified implementation. The feature implementation is complete: 38 unit tests, 22 distinct browser scenarios and the production build pass. [GitHub Pages deployment](https://github.com/Kimliumingyang/skateaway/actions/runs/42430236024) succeeded for the gameplay build. Earlier session reports are retained in [docs/archive](docs/archive/README.md).
+
+Playable preview: https://kimliumingyang.github.io/skateaway/preview/?v=gameplay-docs-20261108
 
 ## Run
 
 Requires Node.js 22.18+ (Node 24 recommended) and npm.
 
 ```sh
-npm install
+npm ci
 npm run dev
 ```
 
-Open the printed local URL (default `http://localhost:5173`). On a phone on the same network, use the printed network URL. The game fits a 1334×750 landscape area and letterboxes the remaining space.
+Open the URL printed by Vite, normally `http://localhost:5173`. Phones on the same network can use the printed network URL. Landscape orientation gives the largest playable view.
 
 ```sh
-npm run build
+npm run check
+npm run build -- --base=./
 npm run preview
-npm test
 ```
 
-Browser acceptance tests require the dev server in another terminal:
+Browser tests require the dev server in another terminal:
 
 ```sh
-# Uses /usr/bin/chromium if installed; otherwise install Playwright Chromium:
+# Uses /usr/bin/chromium when available; otherwise install Chromium first.
 npx playwright install chromium
 npm run test:browser
 ```
 
-Playwright snapshots are written to ignored `work/`. Tests cover 1440×900 desktop and 844×390 landscape touch input. `npm test` checks jumping, coyote time, buffered input, swept landings and 10,000 generated rooftop transitions, 1,000 simulated jump landings, and grounded building/deck alignment.
+Test output and browser captures go to ignored `work/`. Current verification results belong in the [playtest guide](docs/PLAYTEST_GUIDE.md); archived test counts describe earlier revisions.
 
-## Controls and rules
+## Controls and gameplay scope
 
-- Space / click / tap: jump; press again in the air to double jump. Two jumps maximum per airtime. Landing resets jumps.
-- P / Escape or pause button: pause. Resume, settings, restart and menu are functional.
-- Avoid cones, boxes, banana peels, warning signs and gaps. Falling ends the run.
-- Score = floor(distance in world pixels / 10) + 25 × collected coins. HUD distance uses 10 pixels per meter.
-- Coins, best score, top 10 local runs and music/SFX preferences persist in localStorage. Storage errors fall back to session memory.
-- Music starts after interaction. Settings save immediately. Music pauses when the document is hidden; gameplay pauses too.
+- Space / click / tap: jump; press again in the air for a double jump. Landing restores both jumps.
+- J / the TRICK button: attempt a trick in the air. A successful landing banks the style reward.
+- P / Escape / the pause button: pause. Resume, settings, restart and menu remain available.
+- Coins, best score, top ten local runs and audio preferences persist in localStorage. Storage failures fall back to session memory.
 
-## Architecture
+The upgrade implements fair rooftop chunks, optional high routes, Clean Landing and Near Miss rewards, six-second style combos, nonlethal bumps, five difficulty phases, run missions and the supplied Rocket pickup. Star effects, 300-coin revive and rewarded-ad revive are deferred. Specific implementation status is tracked in the [reconciliation](docs/GAMEPLAY_SPEC_RECONCILIATION.md). Missing art limits which catalog objects can ship with the supplied visuals.
 
-`src/game/scenes/` contains boot, menu, gameplay and a modal scene for pause/settings/ranking/results. `systems/Physics.ts` owns deterministic 120 Hz motion and bounded platform generation; `SaveManager.ts` owns validated persistence; `AudioManager.ts` owns supplied music and synthesized feedback. `entities/Player.ts` renders the user-provided character cutout. `WorldConfig.ts` defines the shared ground line and source deck geometry. `ui/Controls.ts` provides shared interactive controls. Coins and roof views are pooled; off-screen world objects are bounded. Event handlers are removed on shutdown.
+The selected score rule is `floor(distance / 10) + 10 × collected coins + banked style points`. Combo multiplies style points only, using ×1 / ×1.5 / ×2 / ×3 / ×4. The selected pacing keeps the first 20 seconds gentle, caps normal speed at 150% and uses harder patterns plus regular recovery sections afterward.
 
-Rooftops alternate controlled height patterns. Gap bounds use speed, gravity, jump velocity and relative roof rise, capped at 45% of a conservative single-jump flight range. Hazards are limited to roofs with enough travel time for obstacle clearance and the next takeoff. Double jump supplies recovery and higher coin routes. Colliders use separate logical dimensions, with swept vertical roof landing checks.
+## Code and assets
 
-## Artwork and limitations
+`src/game/scenes/` contains boot, menu, gameplay and modal screens. Gameplay logic lives in `src/game/systems/`; the player renderer lives in `entities/Player.ts`. `WorldConfig.ts` defines shared geometry and configuration. Images and collision dimensions are separate; original source images retain their aspect ratios.
 
-See [asset inventory](docs/ASSET_MANIFEST.md) and [development report](docs/DEVELOPMENT_REPORT.md). The original archive has no independent character animation. The user later supplied a character reference, now processed into a single-frame transparent cutout at `Asset/Characters/character-cutout.png` and rendered in both menu and gameplay. Tilt and bob are procedural, not a claimed animation sheet. Original buildings 2/3/6/7 use measured deck geometry and uniform scales: all building bottoms end at world y=700 while roof heights vary from 330 to 470. Roof width follows each source aspect ratio; short buildings omit hazards. Falling to the street or hitting a taller facade ends the run. No sprite stretching is used.
+The [asset inventory](docs/ASSET_MANIFEST.md) lists the supplied images, sound and animation provenance. The player uses a transparent single-frame character cutout; movement tilt and bob are procedural. Impact crashes use the supplied APNG converted into a four-pose atlas with the original 782ms sequence timing. Genuine skating, jump, landing and trick animation frames are still missing.
 
-Coin revives, advertising, online leaderboards and shops are deferred. The supplied revive button contains a baked-in advertising badge and is not used. No external SDK or service is simulated. Canvas 2D is used for predictable software-rendered browser performance. Mobile device hardware, Safari audio, actual soundtrack loop seams, and extended play balance still need device testing. The production bundle includes Phaser (~1.5 MB uncompressed); Vite reports its large-chunk advisory.
+Available catalog art includes buildings, two standable signs, an air conditioner, coins, cones, boxes, bananas, caution signs, cracks, a rocket and an energy stone. A star, candy, bird, balloon, brick stack and later specialist hazards require new assets; the energy stone is not relabeled as a star. See the full [missing asset list](docs/GAMEPLAY_SPEC_RECONCILIATION.md#missing-assets).
 
-To regenerate runtime copies and inventory from the original repository assets, install Python Pillow and run `python scripts/assets.py`. The script never overwrites originals or extracts the ZIP.
+Coin revives (300 coins), real rewarded advertising, Star effects, online ranking services and a full cosmetic shop are deferred. Rocket uses the supplied pickup art for three seconds of boosted flight (+30% speed), followed by safe landing and 0.8 seconds of protection. Local rankings and the supplied music work independently of those services. Actual iOS / Android hardware, audio behavior and longer-term balance require device playtests.
+
+To regenerate the original runtime copies and [dimension table](docs/ASSET_DIMENSIONS.md), install Python Pillow and run `python scripts/assets.py`. It preserves original source artwork, does not extract `Asset.zip` and leaves the maintained asset manifest / provenance notes unchanged.
+
+Chinese upload checklist: [待补素材与上传说明](docs/MISSING_ASSETS.zh-CN.md).

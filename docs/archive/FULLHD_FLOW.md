@@ -1,3 +1,5 @@
+> Historical session record. Its dimensions, rules, test counts and deployment status describe that session only. Current scope: [README](../../README.md) and [spec reconciliation](../GAMEPLAY_SPEC_RECONCILIATION.md).
+
 # Full-HD 画面与障碍节奏调整
 
 - 逻辑画布 1920×1080，等比适配屏幕。玩法角色高 180px（画面高度 16.7%，比上一版 21.3% 更小），摔倒图集沿用同等比例。

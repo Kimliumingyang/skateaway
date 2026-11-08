@@ -1,3 +1,5 @@
+> Historical session record. Its dimensions, rules, test counts and deployment status describe that session only. Current scope: [README](../../README.md) and [spec reconciliation](../GAMEPLAY_SPEC_RECONCILIATION.md).
+
 # 走查细节调整：楼房、人物与路线金币
 
 后续用户确认保留画布、按参考图调整画面比例，人物现为 160px 高、金币间距 240px；下文 324px 记录为此前版本，当前配置见 [REFERENCE_PROPORTIONS.md](REFERENCE_PROPORTIONS.md)。

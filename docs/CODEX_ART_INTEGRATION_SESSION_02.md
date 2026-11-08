@@ -1,3 +1,5 @@
+> Historical art integration brief, retained at this path because AGENTS.md references it. Its original portrait target and prototype rules are superseded by the current [README](../README.md) and [gameplay reconciliation](GAMEPLAY_SPEC_RECONCILIATION.md). Source artwork preservation and truthful asset reporting still apply.
+
 # SkateAway — Codex Art Integration Session 02
 
 ## Goal

@@ -1,3 +1,5 @@
+> Historical session record. Its dimensions, rules, test counts and deployment status describe that session only. Current scope: [README](../../README.md) and [spec reconciliation](../GAMEPLAY_SPEC_RECONCILIATION.md).
+
 # 按参考图调整画面内比例
 
 用户确认保留 1334×750 画布，不改成参考截图的约 3.7:1 宽屏。参考图用于人物、金币、楼面和远景的相对比例，不复制截图中的虚构分数或 ×10 连击。

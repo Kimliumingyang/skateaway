@@ -19,13 +19,14 @@ import {
   speedAt,
   type Roof,
 } from "../systems/Physics";
-import { layoutRoofItems, HAZARDS, type LevelItemType } from "../systems/LevelItems";
+import { layoutRoofItems, HAZARDS, PLATFORM_ITEMS, PICKUP_ITEMS, type LevelItemType } from "../systems/LevelItems";
 import { Player } from "../entities/Player";
 import { label } from "../ui/Controls";
 import { marker, graffitiButton, iconButton } from "../ui/Graffiti";
 import { save } from "../systems/SaveManager";
 import { audio } from "../systems/AudioManager";
 import { TrickCombo } from "../systems/TrickCombo";
+import { RunMissions } from "../systems/RunMissions";
 interface PlatformView {
   roof: Roof;
   art: Phaser.GameObjects.Image;
@@ -37,6 +38,8 @@ interface Item {
   type: LevelItemType;
   active: boolean;
   sprite: Phaser.GameObjects.Image;
+  model?: Roof;
+  nearMissAwarded?: boolean;
 }
 export class GameScene extends Phaser.Scene {
   motion!: PlayerMotion;
@@ -63,6 +66,20 @@ export class GameScene extends Phaser.Scene {
   trickHint!: Phaser.GameObjects.Text;
   trickButton!: Phaser.GameObjects.Container;
   hintUntil = 0;
+  missionHud!: Phaser.GameObjects.Text;
+  statusHud!: Phaser.GameObjects.Text;
+  tutorial!: Phaser.GameObjects.Text;
+  missions = new RunMissions();
+  runSequence = 0;
+  successfulTricks = 0;
+  missionBonus = 0;
+  stumbleRemaining = 0;
+  graceRemaining = 0;
+  rocketRemaining = 0;
+  rocketFlying = false;
+  takeoffRoof?: Roof;
+  lastSupport?: Roof;
+  deathReason = "";
   constructor() {
     super("Game");
   }
@@ -84,6 +101,13 @@ export class GameScene extends Phaser.Scene {
     this.tricks = new TrickCombo();
     this.trickStarted = -1;
     this.hintUntil = 0;
+    this.missions = new RunMissions(save.data.records.length + this.runSequence++);
+    this.successfulTricks = 0;
+    this.missionBonus = 0;
+    this.stumbleRemaining = this.graceRemaining = this.rocketRemaining = 0;
+    this.rocketFlying = false;
+    this.takeoffRoof = this.lastSupport = undefined;
+    this.deathReason = "";
     this.sky = this.add
       .tileSprite(0, 0, WIDTH, HEIGHT, "sky")
       .setOrigin(0)
@@ -110,10 +134,17 @@ export class GameScene extends Phaser.Scene {
       24,
       "#e6cdf8",
     ).setDepth(20);
-    this.addRoof({ x: -100, y: START_ROOF_Y, w: deckWidth(START_ROOF_Y, 1), kind: 1 });
+    this.addRoof({ x: -100, y: START_ROOF_Y, w: deckWidth(START_ROOF_Y, 1), kind: 1,
+      elapsed: (-100 - this.motion.x) / speedAt(0, 0) });
     this.populateUntil(WIDTH + 800);
     this.player = new Player(this);
     this.trickHint = marker(this, 300, 190, "", 30).setDepth(21)
+      .setStroke("#28113c", 4);
+    this.missionHud = label(this, WIDTH / 2 - 100, HEIGHT - 82, "", 24, "#efd5f4").setDepth(21)
+      .setStroke("#28113c", 3);
+    this.statusHud = label(this, WIDTH - 370, 130, "", 24, "#eeff42").setDepth(21)
+      .setStroke("#28113c", 3);
+    this.tutorial = label(this, WIDTH / 2, 154, "", 30, "#eeff42").setDepth(21)
       .setStroke("#28113c", 4);
     this.trickButton = graffitiButton(this, WIDTH - 160, HEIGHT - 144, "TRICK · J",
       () => this.performTrick(), 260, { tone: "primary", icon: "bolt", height: 108,
@@ -147,7 +178,7 @@ export class GameScene extends Phaser.Scene {
     });
   }
   performTrick() {
-    if (this.dead || !this.scene.isActive() || !this.tricks.request(this.motion.grounded)) return;
+    if (this.dead || !this.scene.isActive() || this.stumbleRemaining > 0 || this.rocketFlying || !this.tricks.request(this.motion.grounded)) return;
     this.trickStarted = this.tick;
     this.trickHint.setText("KICKFLIP · LAND TO BANK");
     this.hintUntil = Infinity;
@@ -178,8 +209,9 @@ export class GameScene extends Phaser.Scene {
     for (const spawn of previous ? layoutRoofItems(
       previous,
       this.generator.index - 1,
-      speedAt(this.distance),
-      { previous: beforePrevious, next: roof },
+      speedAt(this.distance, this.tick),
+      { previous: beforePrevious, next: roof,
+        elapsed: this.tick + Math.max(0, (previous.x - this.motion.x) / speedAt(this.distance, this.tick)) },
     ) : []) {
       this.addItem(spawn.x, spawn.y, spawn.type);
     }
@@ -188,23 +220,29 @@ export class GameScene extends Phaser.Scene {
     const sprite = (this.pool.pop() ?? this.add.image(0, 0, type))
       .setTexture(type)
       .setPosition(x, y)
-      .setOrigin(0.5, type === "coin" ? 0.5 : 1)
+      .setOrigin(0.5, type === "coin" || type === "rocket" ? 0.5 : 1)
       .setVisible(true)
       .setActive(true)
       .setDepth(5)
       .setAlpha(1);
+    const item: Item = { x, y, type, active: true, sprite };
     if (type === "coin") sprite.setScale(48 / sprite.width);
-    else {
-      const size = HAZARDS[type];
+    else if (type === "rocket") sprite.setScale(PICKUP_ITEMS.rocket.height / sprite.height);
+    else if (type in PLATFORM_ITEMS) {
+      const size = PLATFORM_ITEMS[type as keyof typeof PLATFORM_ITEMS];
+      sprite.setDisplaySize(size.width, size.height).setY(y + size.height);
+      item.model = { x: x - size.width / 2, y, w: size.width, kind: 0 };
+    } else {
+      const size = HAZARDS[type as keyof typeof HAZARDS];
       sprite.setScale(size.height / sprite.height);
     }
-    this.items.push({ x, y, type, active: true, sprite });
+    this.items.push(item);
   }
   populateUntil(x: number) {
     // Keep one destination beyond the horizon so even the long opening has its route planned.
     while (this.roofs.at(-1)!.roof.x < x)
       this.addRoof(
-        this.generator.next(this.roofs.at(-1)!.roof, speedAt(this.distance)),
+        this.generator.next(this.roofs.at(-1)!.roof, speedAt(this.distance, this.tick)),
       );
   }
   pause() {
@@ -238,7 +276,16 @@ export class GameScene extends Phaser.Scene {
     this.player.setPosition(x, this.motion.y);
     this.player.pose(this.motion.grounded, this.motion.vy, this.tick * 1000,
       this.trickStarted < 0 ? -1 : this.tick - this.trickStarted);
-    this.trickButton.setAlpha(!this.motion.grounded && !this.tricks.pending ? 1 : 0.55);
+    this.trickButton.setAlpha(!this.motion.grounded && !this.tricks.pending && this.stumbleRemaining <= 0 && !this.rocketFlying ? 1 : 0.55);
+    this.player.bodyArt.setAlpha(this.graceRemaining > 0 ? 0.55 + Math.sin(this.tick * 35) * 0.25 : 1);
+    this.player.bodyArt.setTint(this.rocketFlying ? 0xffdd85 : 0xffffff);
+    if (this.stumbleRemaining > 0) this.player.bodyArt.rotation += Math.sin(this.tick * 40) * 0.16;
+    this.missionHud.setText(this.missions.summary.join("    ·    "));
+    this.statusHud.setText(this.rocketFlying ? this.rocketRemaining > 0 ? `ROCKET ${Math.ceil(this.rocketRemaining)}s` : "ROCKET · SAFE LANDING" :
+      this.stumbleRemaining > 0 ? "OFF BALANCE · TRICK LOCKED" :
+      this.tricks.combo > 0 ? `COMBO ×${this.tricks.multiplier} · ${this.tricks.remaining.toFixed(1)}s` : "");
+    this.tutorial.setText(this.tick < 5 ? "TAP / SPACE TO JUMP" : this.tick < 10 ? "TAP AGAIN FOR DOUBLE JUMP" :
+      this.tick < 18 ? "FOLLOW COINS · SIGNS ARE SAFE PLATFORMS" : this.tick < 24 ? "PRESS J / TRICK IN THE AIR" : "");
     if (this.tick >= this.hintUntil) this.trickHint.setText("");
     this.cameras.main.scrollX = x - PLAYER_SCREEN_X;
     // Fixed vertical camera keeps every building base on the bottom pixel.
@@ -255,13 +302,35 @@ export class GameScene extends Phaser.Scene {
   }
   fixedUpdate(dt: number) {
     this.tick += dt;
-    const speed = speedAt(this.distance);
+    this.tricks.tick(dt);
+    this.stumbleRemaining = Math.max(0, this.stumbleRemaining - dt);
+    this.graceRemaining = Math.max(0, this.graceRemaining - dt);
+    this.rocketRemaining = Math.max(0, this.rocketRemaining - dt);
+    const speed = speedAt(this.distance, this.tick) * (this.rocketFlying ? 1.3 : this.stumbleRemaining > 0 ? 0.8 : 1);
     this.distance += speed * dt;
     const oldX = this.motion.x;
     this.motion.x += speed * dt;
     const wasGrounded = this.motion.grounded;
-    const event = this.motion.step(dt, this.roofModels);
+    const supports = [...this.roofModels, ...this.items.flatMap(item => item.active && item.model ? [item.model] : [])];
+    const groundSupport = wasGrounded ? this.supportAt(supports, oldX) : undefined;
+    const event = this.motion.step(dt, supports);
+    if (wasGrounded && !this.motion.grounded) this.takeoffRoof = groundSupport ?? this.lastSupport;
+    if (this.rocketFlying) {
+      const under = this.roofModels.find(roof => this.motion.x >= roof.x && this.motion.x <= roof.x + roof.w);
+      if (this.rocketRemaining <= 0 && under && under.x + under.w - this.motion.x > speed * 0.25 + 24) {
+        this.rocketFlying = false;
+        this.graceRemaining = 0.8;
+        this.motion.y = under.y - 30;
+        this.motion.vy = 90;
+      } else {
+        const ahead = under ?? this.roofModels.find(roof => roof.x > this.motion.x);
+        if (ahead) this.motion.y = Math.min(this.motion.y, ahead.y - 120);
+        this.motion.vy = 0;
+      }
+      this.motion.grounded = false;
+    }
     const landed = !wasGrounded && this.motion.grounded;
+    if (this.motion.grounded) this.lastSupport = this.supportAt(supports);
     if (event) {
       audio.tone(event === "jump" ? "jump" : "land");
       this.burst(
@@ -280,23 +349,49 @@ export class GameScene extends Phaser.Scene {
       this.roofPool.push(p);
     }
     for (const item of this.items) {
-      if (!item.active) continue;
-      const dx = Math.abs(item.x - this.motion.x),
-        foot = this.motion.y;
-      if (item.type === "coin") {
-        if (dx < 44 && Math.abs(item.y - (foot - COIN_FOOT_OFFSET)) < PLAYER_HEIGHT * 0.35) {
+      if (!item.active || item.model) continue;
+      const dx = Math.abs(item.x - this.motion.x), foot = this.motion.y;
+      if (item.type === "coin" || item.type === "rocket") {
+        if (dx < 44 && Math.abs(item.y - (foot - COIN_FOOT_OFFSET)) < (this.rocketFlying ? 140 : PLAYER_HEIGHT * 0.35)) {
           item.active = false;
           item.sprite.setVisible(false);
-          this.coins++;
-          audio.tone("coin");
-          this.burst(item.x, item.y, 0xeeff42);
+          if (item.type === "coin") {
+            this.coins++;
+            audio.tone("coin");
+            this.burst(item.x, item.y, 0xeeff42);
+          } else {
+            this.rocketRemaining = 3;
+            this.rocketFlying = true;
+            this.motion.buffer = 0;
+            this.tricks.pending = false;
+            this.styleHint("ROCKET · 3s FLIGHT BOOST");
+            this.burst(item.x, item.y, 0xff9c35);
+          }
         }
-      } else {
-        const h = HAZARDS[item.type].height;
-        if (dx < HAZARDS[item.type].width * 0.38 + 15 && foot > item.y - h + 8 && foot - PLAYER_BODY_HEIGHT < item.y - 5) {
-          this.die();
+        continue;
+      }
+      const hazard = HAZARDS[item.type as keyof typeof HAZARDS];
+      if (dx < hazard.width * 0.38 + 15 && foot > item.y - hazard.height + 8 && foot - PLAYER_BODY_HEIGHT < item.y - 5) {
+        if (this.rocketFlying || this.graceRemaining > 0) continue;
+        if (item.type === "cone" || item.type === "box" || item.type === "banana") {
+          item.active = false;
+          item.sprite.setVisible(false);
+          this.tricks.crash();
+          this.trickStarted = -1;
+          this.graceRemaining = 0.7;
+          this.stumbleRemaining = item.type === "banana" ? 0.6 : 0.25;
+          this.styleHint(item.type === "banana" ? "SLIP! · COMBO LOST · TRICK LOCKED" : "BUMP! · COMBO LOST");
+          this.burst(item.x, item.y - 25, 0xff9c35);
+          audio.tone("land");
+        } else {
+          this.die(item.type === "crack" ? "fall" : "impact", item.type === "crack" ? "MISSED THE CRACK" : "HIT A CAUTION SIGN");
           break;
         }
+      } else if (!item.nearMissAwarded && !this.rocketFlying && this.graceRemaining <= 0 && !this.motion.grounded && oldX <= item.x && this.motion.x > item.x &&
+        foot <= item.y - hazard.height + 8 && foot > item.y - hazard.height - 38) {
+        item.nearMissAwarded = true;
+        const award = this.tricks.award(75);
+        this.styleHint(`NEAR MISS +${award} · COMBO ×${this.tricks.multiplier}`);
       }
     }
     for (let i = this.items.length - 1; i >= 0; i--) {
@@ -313,28 +408,44 @@ export class GameScene extends Phaser.Scene {
         this.motion.y > roof.y + 12 &&
         this.motion.y - PLAYER_BODY_HEIGHT < GROUND
       ) {
-        this.die();
+        if (!this.rocketFlying) this.die("impact", "HIT THE BUILDING FACADE");
         break;
       }
     }
-    if (this.motion.y >= GROUND + 8) this.die("fall");
+    if (this.motion.y >= GROUND + 8 && !this.rocketFlying) this.die("fall", "FELL BETWEEN ROOFS");
     // Resolve after hazards: touching an obstacle on the landing step cannot bank a trick.
     if (!this.dead && landed) {
+      const didTrick = this.tricks.pending;
       const award = this.tricks.land();
+      if (didTrick && award) this.successfulTricks++;
       this.trickStarted = -1;
-      if (award) {
-        this.trickHint.setText(`KICKFLIP +${award}${this.tricks.combo > 1 ? `\nCOMBO ×${this.tricks.combo}` : ""}`);
-        this.hintUntil = this.tick + 1.2;
-      }
+      const support = this.lastSupport;
+      const ratio = support ? (this.motion.x - support.x) / support.w : -1;
+      const crossedGap = support && this.takeoffRoof && support !== this.takeoffRoof &&
+        this.takeoffRoof.x + this.takeoffRoof.w < support.x;
+      const clean = crossedGap && ratio >= 0.2 && ratio <= 0.55 && this.graceRemaining <= 0 ? this.tricks.award(50) : 0;
+      if (award || clean) this.styleHint(`${award ? `KICKFLIP +${award}` : ""}${clean ? `  CLEAN LANDING +${clean}` : ""}\nCOMBO ×${this.tricks.multiplier}`);
+      this.takeoffRoof = undefined;
     }
+    this.missions.update(this.coins, this.tick, this.successfulTricks);
     this.updateScore();
   }
   updateScore() {
-    this.score = Math.floor(this.distance / 10) + this.coins * 25 + this.tricks.points;
+    this.score = Math.floor(this.distance / 10) + this.coins * 10 + this.tricks.points;
   }
-  die(reason: "impact" | "fall" = "impact") {
+  supportAt(supports: Roof[], x = this.motion.x) {
+    return supports.find(roof => x + 18 > roof.x && x - 18 < roof.x + roof.w && Math.abs(this.motion.y - roof.y) < 2);
+  }
+  styleHint(text: string) {
+    this.trickHint.setText(text);
+    this.hintUntil = this.tick + 1.8;
+  }
+  die(reason: "impact" | "fall" = "impact", explanation = "COLLISION") {
     if (this.dead) return;
     this.dead = true;
+    this.deathReason = explanation;
+    this.missions.update(this.coins, this.tick, this.successfulTricks);
+    this.missionBonus = this.missions.settle();
     this.tricks.crash();
     this.trickStarted = -1;
     this.trickHint.setText("");
@@ -343,13 +454,17 @@ export class GameScene extends Phaser.Scene {
     if (save.data.vibration) navigator.vibrate?.(80);
     this.cameras.main.shake(180, 0.009);
     this.burst(this.motion.x, this.motion.y - 65, 0xff3dbf);
-    save.finish(this.score, this.coins);
+    save.finish(this.score, this.coins, { distance: Math.floor(this.distance / 10),
+      maxCombo: this.tricks.bestMultiplier, bonus: this.missionBonus, seconds: this.tick });
     const showReplay = () => {
       this.scene.launch("Overlay", {
         mode: "over",
         origin: "Game",
         score: this.score,
         coins: this.coins,
+        bonus: this.missionBonus,
+        maxCombo: this.tricks.bestMultiplier,
+        reason: this.deathReason,
       });
       this.scene.pause();
     };
