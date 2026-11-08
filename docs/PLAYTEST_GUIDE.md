@@ -6,7 +6,7 @@ The game uses a 1920×1080 landscape canvas. Current gameplay decisions and the 
 
 Prepared Pages preview: https://kimliumingyang.github.io/skateaway/preview/?v=gameplay-docs-20261108
 
-Current upgrade deployment is pending. Source changes do not automatically update `main/preview/`. Check the [delivery record](GAMEPLAY_SPEC_RECONCILIATION.md#verification-and-preview-delivery-record) before treating the public URL as the current build.
+The current gameplay build has been published; [GitHub Pages deployment](https://github.com/Kimliumingyang/skateaway/actions/runs/42430236024) succeeded for the gameplay build. Source changes do not automatically update `main/preview/`. Check the [delivery record](GAMEPLAY_SPEC_RECONCILIATION.md#verification-and-preview-delivery-record) before treating the public URL as the current build.
 
 ```sh
 npm ci
@@ -46,7 +46,7 @@ The implemented feature scope has passed the automated browser checks below. Use
 
 ## Verification record
 
-`npm run check` passes, including 38 unit tests and the TypeScript / Vite build. The relative-path production build also passes. All 22 distinct browser scenarios pass across the full run and targeted reruns. A separate production smoke test passes at simulated `/skateaway/preview/`: image / font / audio loading has zero bad responses or page errors, two missions render, Rocket collection works and pause freezes effects. Actual public deployment remains pending. Archived counts apply only to their historical revisions.
+`npm run check` passes, including 38 unit tests and the TypeScript / Vite build. The relative-path production build also passes. All 22 distinct browser scenarios pass across the full run and targeted reruns. A separate production smoke test passes at simulated `/skateaway/preview/`: image / font / audio loading has zero bad responses or page errors, two missions render, Rocket collection works and pause freezes effects. [GitHub Pages deployment](https://github.com/Kimliumingyang/skateaway/actions/runs/42430236024) succeeded for the gameplay build. Public-host access is restricted in the execution environment, so deployment status comes from Pages while browser verification uses the production subpath. Archived counts apply only to their historical revisions.
 
 ```sh
 npm run check
@@ -60,3 +60,5 @@ Browser tests require a running dev server. Tests may position real objects or u
 Record the device / browser, screen orientation, run time, visible obstacle / platform, expected action and actual result. A screenshot and console error help investigate rendering or loading failures. For balance feedback, note coins per run, first-use understanding, double-jump use, high-route choice and whether the death felt avoidable.
 
 Real iOS / Android touch, sound / vibration behavior and longer play sessions remain separate device checks. Missing asset details are in the [reconciliation](GAMEPLAY_SPEC_RECONCILIATION.md#missing-assets).
+
+中文素材清单：[待补素材与上传说明](MISSING_ASSETS.zh-CN.md)。

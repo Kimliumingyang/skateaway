@@ -13,3 +13,7 @@
 main 保存源素材、文档和 Pages 编译预览；可开发的 Phaser/TypeScript/Vite 源码位于上面的功能分支，源码 PR 尚未合并。请不要把 GitHub 文件列表当成游戏页面。
 
 原始 Asset.zip 和所有美术保留；历史会话报告已归档，旧预览中未引用的 JS/CSS 构建文件已清理。Star、飞鸟/气球、蒸汽等缺图内容暂不生成；广告、300金币复活、完整商店和在线排行榜尚未接入。
+
+- [中文：待补素材与上传说明](docs/MISSING_ASSETS.zh-CN.md)
+
+本轮游戏构建已通过 GitHub Pages 发布：[成功记录](https://github.com/Kimliumingyang/skateaway/actions/runs/42430236024)。

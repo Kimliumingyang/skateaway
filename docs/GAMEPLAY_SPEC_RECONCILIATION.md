@@ -2,7 +2,7 @@
 
 This document reconciles the two attached product references: **《SkateAway · 霓虹屋顶滑板跑酷》完整游戏策划案** (gameplay GDD) and **《SkateAway 滑板小子》** (items, pacing and economy; dated August 8, 2026). Both PDFs were read in full. Values are initial design targets subject to playtesting. Historical development reports live in [archive](archive/README.md).
 
-Status: the implemented feature scope below is complete. 38 unit tests, 22 distinct browser scenarios, `npm run check` and the relative-path production build pass. Preview deployment is pending.
+Status: the implemented feature scope below is complete. 38 unit tests, 22 distinct browser scenarios, `npm run check` and the relative-path production build pass. [GitHub Pages deployment](https://github.com/Kimliumingyang/skateaway/actions/runs/42430236024) succeeded for the gameplay build.
 
 ## Decisions where documents differ
 
@@ -20,7 +20,7 @@ Status: the implemented feature scope below is complete. 38 unit tests, 22 disti
 
 ## Current P0 implementation
 
-The rows below describe this release's code scope, rather than every goal in the source PDFs. Unit, browser and build validation pass; preview publication remains pending until confirmed in the delivery record. No absent artwork is replaced with an unrelated sprite.
+The rows below describe this release's code scope, rather than every goal in the source PDFs. Unit, browser and build validation pass; the gameplay build has been published through GitHub Pages. No absent artwork is replaced with an unrelated sprite.
 
 | System | Implemented scope |
 |---|---|
@@ -90,8 +90,10 @@ Coin revive (300 coins, at most once per run with safe repositioning and protect
 
 `npm run check` passes: 38 unit tests and the TypeScript / Vite production build. `npm run build -- --base=./` also passes. All 22 distinct browser scenarios pass across the full run and targeted reruns (19 full-run passes, two targeted reruns, one additional edge case). The generator / asset cleanup also passes a regeneration check: the maintained manifest and all 104 pre-existing source / runtime / archive files remain byte-identical, while the separate dimensions table is regenerated.
 
-The final browser checks cover keyboard / touch controls, pause / retry, rewards, persistence and new gameplay paths. A separate production smoke test also passes with the build mounted at simulated `/skateaway/preview/`: images, fonts and audio load with zero bad responses or page errors; two missions render, the Rocket pickup works, and pausing freezes active effects. Actual public deployment remains pending. Browser emulation is separate from real device balance testing.
+The final browser checks cover keyboard / touch controls, pause / retry, rewards, persistence and new gameplay paths. A separate production smoke test also passes with the build mounted at simulated `/skateaway/preview/`: images, fonts and audio load with zero bad responses or page errors; two missions render, the Rocket pickup works, and pausing freezes active effects. [GitHub Pages deployment](https://github.com/Kimliumingyang/skateaway/actions/runs/42430236024) succeeded for the gameplay build. The environment cannot directly access github.io; public deployment is verified from the successful Pages workflow, while browser behavior is verified against the production build under its real subpath. Browser emulation is separate from real device balance testing.
 
 Prepared preview URL: https://kimliumingyang.github.io/skateaway/preview/?v=gameplay-docs-20261108
 
-Deployment is pending. This URL is not yet confirmation that the current upgrade is publicly available.
+[GitHub Pages deployment](https://github.com/Kimliumingyang/skateaway/actions/runs/42430236024) succeeded for the gameplay build.
+
+中文素材补充清单：[待补素材与上传说明](MISSING_ASSETS.zh-CN.md)。
