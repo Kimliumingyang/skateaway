@@ -278,7 +278,7 @@ test("completed missions settle once, appear in results and reset on free retry"
     return { missions, dead: g.dead, bonus: g.missionBonus, once, repeated,
       secondSettlement: g.missions.settle() };
   }, { footOffset: COIN_FOOT_OFFSET });
-  expect(settled.missions).toEqual([{ id: "coins15", complete: true }, { id: "double5", complete: true }]);
+  expect(settled.missions).toEqual([{ id: "M01", complete: true }, { id: "M04", complete: true }]);
   expect(settled).toMatchObject({ dead: true, bonus: 50, secondSettlement: 0 });
   expect(settled.once.wallet).toBe(80);
   expect(settled.once.records).toHaveLength(1);

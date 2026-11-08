@@ -24,7 +24,7 @@ export class RookieChallenges {
       (current.id === "R03" && event.type === "land" && event.order === 2 && !!event.doubleJump) ||
       (current.id === "R04" && event.type === "high" && event.order === 2) ||
       (current.id === "R05" && event.type === "land" && event.order === 4) ||
-      (current.id === "R06" && event.type === "land" && event.order === 6) ||
+      (current.id === "R06" && event.type === "pass" && event.order === 6) ||
       (current.id === "R07" && event.type === "pass" && event.order === 9);
     return completed && save.unlockRookie(current.id, current.reward) ? current : undefined;
   }

@@ -157,3 +157,20 @@ test("rookie rewards settle once and personal bests remain independent", (t) => 
   assert.equal(save.data.wallet, 12);
   assert.equal(save.data.records.find(record => record.score === 100)?.deathCause, "SEAGULL");
 });
+
+test("street legend totals and badge unlock times persist across runs", (t) => {
+  storageFor(t);
+  const save = new SaveManager();
+  assert.equal(save.startRun(), 0);
+  assert.equal(save.startRun(), 1);
+  assert.deepEqual(save.recordLegend("gaps", 99), []);
+  assert.equal(save.recordLegend("gaps")[0].id, "roofSurfer");
+  assert.deepEqual(save.recordLegend("gaps"), []);
+  assert.equal(save.recordLegend("doubles")[0].id, "firstFlight");
+  const reloaded = new SaveManager();
+  assert.equal(reloaded.data.runSerial, 2);
+  assert.equal(reloaded.data.legendTotals.gaps, 101);
+  assert.ok(reloaded.data.legendUnlocked.roofSurfer);
+  assert.ok(reloaded.data.legendUnlocked.firstFlight);
+  assert.equal(reloaded.data.wallet, 0, "badges do not mint coins");
+});

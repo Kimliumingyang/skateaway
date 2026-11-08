@@ -1,3 +1,5 @@
+import { LEGEND_CATALOG, emptyLegendTotals, type LegendId, type LegendMetric, type LegendTotals } from "./StreetLegends.ts";
+
 export interface RunDetails {
   distance?: number;
   maxCombo?: number;
@@ -22,6 +24,9 @@ export interface SaveData {
   bestCombo: number;
   rookieCompleted: string[];
   pendingRookieBonus: number;
+  runSerial: number;
+  legendTotals: LegendTotals;
+  legendUnlocked: Partial<Record<LegendId, string>>;
   music: boolean;
   sfx: boolean;
   vibration: boolean;
@@ -35,6 +40,9 @@ const defaults = (): SaveData => ({
   bestCombo: 1,
   rookieCompleted: [],
   pendingRookieBonus: 0,
+  runSerial: 0,
+  legendTotals: emptyLegendTotals(),
+  legendUnlocked: {},
   music: true,
   sfx: true,
   vibration: false,
@@ -91,6 +99,12 @@ export class SaveManager {
           rookieCompleted: Array.isArray(d.rookieCompleted)
             ? d.rookieCompleted.filter((id: unknown): id is string => typeof id === "string") : [],
           pendingRookieBonus: amount(d.pendingRookieBonus),
+          runSerial: validAmount(d.runSerial) ? d.runSerial : (Array.isArray(d.records) ? d.records.length : 0),
+          legendTotals: Object.fromEntries(Object.keys(emptyLegendTotals()).map(key =>
+            [key, amount(d.legendTotals?.[key])])) as unknown as LegendTotals,
+          legendUnlocked: Object.fromEntries(LEGEND_CATALOG.flatMap(legend =>
+            typeof d.legendUnlocked?.[legend.id] === "string"
+              ? [[legend.id, d.legendUnlocked[legend.id]]] : [])) as Partial<Record<LegendId, string>>,
           music: typeof d.music === "boolean" ? d.music : true,
           sfx: typeof d.sfx === "boolean" ? d.sfx : true,
           vibration: typeof d.vibration === "boolean" ? d.vibration : false,
@@ -138,6 +152,20 @@ export class SaveManager {
     this.data.pendingRookieBonus += reward;
     this.save();
     return true;
+  }
+  startRun() {
+    const serial = this.data.runSerial++;
+    this.save();
+    return serial;
+  }
+  recordLegend(metric: LegendMetric, count = 1) {
+    if (!Number.isFinite(count) || count <= 0) return [];
+    this.data.legendTotals[metric] += count;
+    const unlocked = LEGEND_CATALOG.filter(legend => legend.metric === metric &&
+      !this.data.legendUnlocked[legend.id] && this.data.legendTotals[metric] >= legend.target);
+    for (const legend of unlocked) this.data.legendUnlocked[legend.id] = new Date().toISOString();
+    this.save();
+    return unlocked;
   }
 }
 export const save = new SaveManager();
