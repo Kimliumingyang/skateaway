@@ -188,3 +188,15 @@ UI panels, tape corners, brush shapes, buttons, switches and icons are scalable 
 Original generated coin SFX: public/assets/sfx/coin.wav, 260ms, mono 44.1kHz 16-bit PCM, peak -3.7 dBFS before playback gain 0.22. Reproduce with scripts/generate-coin-sfx.py using standard-library synthesis, no third-party samples. Soft attack/release, ascending pitched notes with quiet metallic overtones. Playback is decoded once, limited to four simultaneous voices and at least 35ms between starts; the SFX switch mutes and stops active coin sounds.
 
 The uploaded Cyan Kickflip.mp3 is byte-identical to the existing public/assets/music.mp3 (SHA-256 36a616a6dbd566e48f05d193823f30380083bd1a16aee98cb2aaf16be9ae210f): 93.24 seconds, stereo, 48kHz. The supplied track remains the looping BGM; no duplicate music asset was created.
+
+## Supplied first / double-jump APNG integration
+
+`一段跳.png.zip` supplies 16 transparent APNG frames at 35ms (560ms total), 1122×1721 source canvas. PNG SHA-256: `823ccd80dad425200385b391252bbe6de264da0afc02f16d91e43ddfe405c373`. `二段跳.png.zip` supplies 20 frames at 33ms (660ms total), 1122×2233 canvas; PNG SHA-256: `ea13fdd313e726ccaeeac3dd352f0815d3989fe5729549bdd399312c8cc9b912`.
+
+`public/assets/jump-first.png` / `jump-double.png` pack five / seven unique poses into 378×383 cells. Consecutive duplicate poses retain their combined original durations in the matching JSON; original frame indices, alpha bounds, source/ZIP hashes and registration are recorded. Original images contain baked vertical translation: registering each full-alpha bottom at the physical board baseline avoids applying that rise twice. One uniform 1/3 raster scale and a shared 1137px source reference height preserve pose proportions. Runtime display stays within the current 180px player height. No poses are generated or repainted. Both ZIPs remain unchanged; `scripts/pack-jumps.py` regenerates the same assets given the uploads.
+
+Actual first/second physics jumps start the corresponding one-shot animation. Extra jump presses do not restart it. Last air pose holds until landing; landing restores skating, and impact crash interrupts jumping. Grace / Rocket / stumble tint and alpha follow the currently visible character. Existing crash art is retained.
+
+The previously supplied `yidd.png`, `hotel.png`, `deep-earth.png` are now loaded and displayed as facade signs, with image aspect ratios preserved. They remain non-colliding decorations. `crack.png` remains the existing lethal ground-crack art.
+
+The new menu hero, Star, balloon and bird were shown inline in chat, but downloadable source files have not yet been provided. Their replacement / upload / gameplay integration remains pending; no substitute asset is claimed as the user's new artwork.

@@ -1,8 +1,8 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { layoutRoofItems, gapRoute, layoutHazards, layoutOptionalPlatforms, HAZARDS, PLATFORM_ITEMS } from "../src/game/systems/LevelItems.ts";
-import { COIN_SPACING, COIN_FOOT_OFFSET, PLAYER_SCREEN_X, deckWidth } from "../src/game/WorldConfig.ts";
-import { GRAVITY, JUMP, STEP, PlayerMotion, PlatformGenerator, speedAt, isRecoveryAt, type Roof } from "../src/game/systems/Physics.ts";
+import { layoutRoofItems, gapRoute, layoutHazards, layoutOptionalPlatforms, HAZARDS, PLATFORM_ITEMS, OPTIONAL_ROUTE_SPACING } from "../src/game/systems/LevelItems.ts";
+import { COIN_SPACING, COIN_FOOT_OFFSET, PLAYER_SCREEN_X, BASE_RUN_SPEED, MAX_RUN_SPEED, deckWidth } from "../src/game/WorldConfig.ts";
+import { GRAVITY, JUMP, STEP, PlayerMotion, PlatformGenerator, speedAt, difficultyAt, isRecoveryAt, type Roof } from "../src/game/systems/Physics.ts";
 
 test("opening bridge includes readable obstacles after an introductory run-up", () => {
   const first = { x: -100, y: 720, w: deckWidth(720, 1), kind: 1 };
@@ -14,7 +14,8 @@ test("opening bridge includes readable obstacles after an introductory run-up", 
   assert.equal(next.kind, 2);
 });
 
-test("coin grid stays 300px apart across roofs and gaps, without duplicate clusters", () => {
+test("denser coin grid stays 240px apart across roofs and gaps, without duplicate clusters", () => {
+  assert.equal(COIN_SPACING, 240);
   const g = new PlatformGenerator(() => 0.5);
   const roofs = [{ x: -100, y: 720, w: deckWidth(720, 1), kind: 1 }];
   for (let i = 0; i < 1000; i++) roofs.push(g.next(roofs.at(-1)!, speedAt(i * 500)));
@@ -83,29 +84,29 @@ test("recovery windows stay clear and hazard types follow the elapsed tier", () 
 
 test("both optional routes preserve a clear base and place bonus coins on real platform tops", () => {
   for (const index of [5, 9]) {
-    for (const speed of [380, 570]) {
+    for (const speed of [BASE_RUN_SPEED, MAX_RUN_SPEED]) {
       const roof: Roof = { x: 0, y: 720, w: deckWidth(720, 2), kind: 2, chunk: "C07", elapsed: 30 };
       const items = layoutRoofItems(roof, index, speed);
       const platforms = items.filter(item => item.type in PLATFORM_ITEMS);
       const bonuses = items.filter(item => item.type === "coin" && item.bonus);
       assert.equal(platforms.length, 2);
       assert.equal(bonuses.length, 6);
-      assert.equal(platforms[1].x - platforms[0].x, COIN_SPACING);
-      assert.equal(bonuses[3].x - bonuses[0].x, COIN_SPACING);
+      assert.equal(platforms[1].x - platforms[0].x, OPTIONAL_ROUTE_SPACING);
+      assert.equal(bonuses[3].x - bonuses[0].x, OPTIONAL_ROUTE_SPACING);
       assert.ok(items.every(item => !(item.type in HAZARDS)));
       for (let i = 0; i < platforms.length; i++) {
         assert.equal(bonuses[i * 3 + 1].x, platforms[i].x);
         assert.ok(bonuses.slice(i * 3, i * 3 + 3).every(coin => coin.y === platforms[i].y - COIN_FOOT_OFFSET));
       }
       assert.ok(items.some(item => item.type === "coin" && !item.bonus && item.y === roof.y - COIN_FOOT_OFFSET));
-      assert.ok(platforms.at(-1)!.x + 150 + speed * 0.62 < roof.w);
+      assert.ok(platforms.at(-1)!.x + 150 + speed * 0.58 < roof.w);
     }
   }
   assert.equal(layoutOptionalPlatforms({ x: 0, y: 720, w: 700, kind: 6, chunk: "C07", elapsed: 30 }, 5, 380).length, 0);
 });
 
 test("aircon route is reachable with one jump and high signs with two, using actual motion", () => {
-  for (const speed of [380, 570]) {
+  for (const speed of [BASE_RUN_SPEED, MAX_RUN_SPEED]) {
     for (const index of [5, 9]) {
       const roof: Roof = { x: 0, y: 720, w: deckWidth(720, 2), kind: 2, chunk: "C07", elapsed: 30 };
       const platform = layoutOptionalPlatforms(roof, index, speed).find(item => item.type in PLATFORM_ITEMS)!;
@@ -137,6 +138,15 @@ test("aircon route is reachable with one jump and high signs with two, using act
   }
 });
 
+test("optional routes yield to a safe clear roof when rocket speed leaves too little return room", () => {
+  const roof: Roof = { x: 0, y: 720, w: deckWidth(720, 2), kind: 2, chunk: "C07", elapsed: 30 };
+  for (const index of [5, 9]) {
+    const items = layoutRoofItems(roof, index, MAX_RUN_SPEED * 1.3);
+    assert.ok(items.every(item => item.type === "coin"));
+    assert.ok(items.every(item => item.y === roof.y - COIN_FOOT_OFFSET));
+  }
+});
+
 test("rocket pickups have a safe run-up and no invented star or flying spawns", () => {
   const roof: Roof = { x: 0, y: 720, w: 2000, kind: 2, elapsed: 40, rocket: true };
   const items = layoutRoofItems(roof, 12, 450);
@@ -162,4 +172,27 @@ test("a generated first minute offers both route templates, with safe teaching b
     }
   }
   assert.deepEqual([...routes].sort(), ["aircon-step", "billboard-high"]);
+});
+
+test("denser hazard beats still leave one full jump, entry and exit room through rocket speeds", () => {
+  const roof = { x: 0, y: 720, w: 20000, kind: 1 };
+  for (const elapsed of [0, 20, 45, 75, 120]) {
+    for (const speed of [BASE_RUN_SPEED, MAX_RUN_SPEED, MAX_RUN_SPEED * 1.3]) {
+      const hazards = layoutHazards(roof, 4, speed, elapsed);
+      assert.ok(hazards.length >= 3);
+      for (let i = 0; i < hazards.length; i++) {
+        assert.ok(hazards[i].x >= speed * 0.85);
+        assert.ok(roof.w - hazards[i].x >= speed * 0.85);
+        const encounter = elapsed + hazards[i].x / speed;
+        for (const offset of [-JUMP / GRAVITY, 0, JUMP / GRAVITY]) {
+          assert.equal(isRecoveryAt(encounter + offset), false);
+        }
+        if (!i) continue;
+        const seconds = (hazards[i].x - hazards[i - 1].x) / speed;
+        assert.ok(seconds >= difficultyAt(elapsed).hazardInterval);
+        assert.ok(seconds > 2 * JUMP / GRAVITY + 0.4,
+          "each complete jump leaves at least 0.4s before the next jump");
+      }
+    }
+  }
 });

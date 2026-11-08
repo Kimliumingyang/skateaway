@@ -1,0 +1,197 @@
+{
+  "sourceUpload": "\u4e00\u6bb5\u8df3.png.zip",
+  "sourceZipSha256": "c0dfbb5857e33cd83f90c90d015ae7f29588784679ec999045374d2053fbfca2",
+  "sourceSha256": "823ccd80dad425200385b391252bbe6de264da0afc02f16d91e43ddfe405c373",
+  "sourceSize": [
+    1122,
+    1721
+  ],
+  "sourceFrameCount": 16,
+  "sourceFrameDurationsMs": [
+    35.0,
+    35.0,
+    35.0,
+    35.0,
+    35.0,
+    35.0,
+    35.0,
+    35.0,
+    35.0,
+    35.0,
+    35.0,
+    35.0,
+    35.0,
+    35.0,
+    35.0,
+    35.0
+  ],
+  "sourceFrameAlphaBounds": [
+    [
+      212,
+      541,
+      920,
+      1619
+    ],
+    [
+      212,
+      541,
+      920,
+      1619
+    ],
+    [
+      212,
+      541,
+      920,
+      1619
+    ],
+    [
+      148,
+      416,
+      998,
+      1488
+    ],
+    [
+      148,
+      416,
+      998,
+      1488
+    ],
+    [
+      148,
+      416,
+      998,
+      1488
+    ],
+    [
+      122,
+      268,
+      1003,
+      1368
+    ],
+    [
+      122,
+      268,
+      1003,
+      1368
+    ],
+    [
+      122,
+      268,
+      1003,
+      1368
+    ],
+    [
+      122,
+      268,
+      1003,
+      1368
+    ],
+    [
+      75,
+      128,
+      969,
+      1235
+    ],
+    [
+      75,
+      128,
+      969,
+      1235
+    ],
+    [
+      75,
+      128,
+      969,
+      1235
+    ],
+    [
+      75,
+      128,
+      969,
+      1235
+    ],
+    [
+      130,
+      352,
+      1010,
+      1455
+    ],
+    [
+      130,
+      352,
+      1010,
+      1455
+    ]
+  ],
+  "sourceDefaultImage": false,
+  "sourceLoopCount": 0,
+  "durationMs": 560.0,
+  "frameWidth": 378,
+  "frameHeight": 383,
+  "uniquePoseCount": 5,
+  "referenceHeight": 379,
+  "originX": 0.5,
+  "originY": 0.9947780678851175,
+  "registration": {
+    "sourceAnchorX": 561.0,
+    "sourceReferenceHeight": 1137,
+    "rasterScale": 0.3333333333333333,
+    "padding": 2,
+    "verticalAnchor": "per-frame full-alpha bottom",
+    "bakedCanvasTranslationRemoved": true
+  },
+  "atlasSha256": "6fdefa5cd31024cc339c17eb4d47191437ff37881ce2829d1c334b2f3fd96c0c",
+  "frames": [
+    {
+      "key": "jump-first",
+      "frame": 0,
+      "duration": 105.0,
+      "sourceFrameIndices": [
+        0,
+        1,
+        2
+      ]
+    },
+    {
+      "key": "jump-first",
+      "frame": 1,
+      "duration": 105.0,
+      "sourceFrameIndices": [
+        3,
+        4,
+        5
+      ]
+    },
+    {
+      "key": "jump-first",
+      "frame": 2,
+      "duration": 140.0,
+      "sourceFrameIndices": [
+        6,
+        7,
+        8,
+        9
+      ]
+    },
+    {
+      "key": "jump-first",
+      "frame": 3,
+      "duration": 140.0,
+      "sourceFrameIndices": [
+        10,
+        11,
+        12,
+        13
+      ]
+    },
+    {
+      "key": "jump-first",
+      "frame": 4,
+      "duration": 70.0,
+      "sourceFrameIndices": [
+        14,
+        15
+      ]
+    }
+  ]
+}

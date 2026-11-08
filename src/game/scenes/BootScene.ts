@@ -31,6 +31,9 @@ export class BootScene extends Phaser.Scene {
       "warning",
       "sign-cyber",
       "sign-neon",
+      "yidd",
+      "hotel",
+      "deep-earth",
     ];
     for (const n of names)
       this.load.image(n, `${import.meta.env.BASE_URL}assets/${n}.png`);
@@ -39,6 +42,14 @@ export class BootScene extends Phaser.Scene {
       frameHeight: 412,
     });
     this.load.json("crash-data", `${import.meta.env.BASE_URL}assets/crash.json`);
+    for (const key of ["jump-first", "jump-double"]) {
+      // Exact 1/3 source scale, with two transparent padding pixels per edge.
+      this.load.spritesheet(key, `${import.meta.env.BASE_URL}assets/${key}.png`, {
+        frameWidth: 378,
+        frameHeight: 383,
+      });
+      this.load.json(`${key}-data`, `${import.meta.env.BASE_URL}assets/${key}.json`);
+    }
     fitMenuLayout(this);
   }
   create() {
@@ -48,6 +59,16 @@ export class BootScene extends Phaser.Scene {
         key: "crash",
         frames: this.cache.json.get("crash-data").frames,
         frameRate: 1000 / 34,
+        repeat: 0,
+      });
+    }
+    for (const key of ["jump-first", "jump-double"]) {
+      if (this.anims.exists(key)) continue;
+      const jump = this.cache.json.get(`${key}-data`);
+      this.anims.create({
+        key,
+        frames: jump.frames,
+        duration: jump.durationMs,
         repeat: 0,
       });
     }

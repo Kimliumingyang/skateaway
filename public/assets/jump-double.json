@@ -1,0 +1,243 @@
+{
+  "sourceUpload": "\u4e8c\u6bb5\u8df3.png.zip",
+  "sourceZipSha256": "41372f9cb3e64de1f4f0f6afcc62aa82096b812f947b9cca988780997f524aac",
+  "sourceSha256": "ea13fdd313e726ccaeeac3dd352f0815d3989fe5729549bdd399312c8cc9b912",
+  "sourceSize": [
+    1122,
+    2233
+  ],
+  "sourceFrameCount": 20,
+  "sourceFrameDurationsMs": [
+    33.0,
+    33.0,
+    33.0,
+    33.0,
+    33.0,
+    33.0,
+    33.0,
+    33.0,
+    33.0,
+    33.0,
+    33.0,
+    33.0,
+    33.0,
+    33.0,
+    33.0,
+    33.0,
+    33.0,
+    33.0,
+    33.0,
+    33.0
+  ],
+  "sourceFrameAlphaBounds": [
+    [
+      212,
+      1053,
+      920,
+      2131
+    ],
+    [
+      212,
+      1053,
+      920,
+      2131
+    ],
+    [
+      212,
+      1053,
+      920,
+      2131
+    ],
+    [
+      148,
+      928,
+      998,
+      2000
+    ],
+    [
+      148,
+      928,
+      998,
+      2000
+    ],
+    [
+      122,
+      780,
+      1003,
+      1880
+    ],
+    [
+      122,
+      780,
+      1003,
+      1880
+    ],
+    [
+      122,
+      780,
+      1003,
+      1880
+    ],
+    [
+      75,
+      640,
+      969,
+      1747
+    ],
+    [
+      75,
+      640,
+      969,
+      1747
+    ],
+    [
+      75,
+      640,
+      969,
+      1747
+    ],
+    [
+      75,
+      640,
+      969,
+      1747
+    ],
+    [
+      48,
+      448,
+      966,
+      1574
+    ],
+    [
+      48,
+      448,
+      966,
+      1574
+    ],
+    [
+      48,
+      448,
+      966,
+      1574
+    ],
+    [
+      64,
+      282,
+      951,
+      1419
+    ],
+    [
+      64,
+      282,
+      951,
+      1419
+    ],
+    [
+      64,
+      282,
+      951,
+      1419
+    ],
+    [
+      116,
+      572,
+      984,
+      1660
+    ],
+    [
+      116,
+      572,
+      984,
+      1660
+    ]
+  ],
+  "sourceDefaultImage": false,
+  "sourceLoopCount": 0,
+  "durationMs": 660.0,
+  "frameWidth": 378,
+  "frameHeight": 383,
+  "uniquePoseCount": 7,
+  "referenceHeight": 379,
+  "originX": 0.5,
+  "originY": 0.9947780678851175,
+  "registration": {
+    "sourceAnchorX": 561.0,
+    "sourceReferenceHeight": 1137,
+    "rasterScale": 0.3333333333333333,
+    "padding": 2,
+    "verticalAnchor": "per-frame full-alpha bottom",
+    "bakedCanvasTranslationRemoved": true
+  },
+  "atlasSha256": "18833762b1fa40f155913ea89eadde04043b902ad26536df8266202b054b2e8e",
+  "frames": [
+    {
+      "key": "jump-double",
+      "frame": 0,
+      "duration": 99.0,
+      "sourceFrameIndices": [
+        0,
+        1,
+        2
+      ]
+    },
+    {
+      "key": "jump-double",
+      "frame": 1,
+      "duration": 66.0,
+      "sourceFrameIndices": [
+        3,
+        4
+      ]
+    },
+    {
+      "key": "jump-double",
+      "frame": 2,
+      "duration": 99.0,
+      "sourceFrameIndices": [
+        5,
+        6,
+        7
+      ]
+    },
+    {
+      "key": "jump-double",
+      "frame": 3,
+      "duration": 132.0,
+      "sourceFrameIndices": [
+        8,
+        9,
+        10,
+        11
+      ]
+    },
+    {
+      "key": "jump-double",
+      "frame": 4,
+      "duration": 99.0,
+      "sourceFrameIndices": [
+        12,
+        13,
+        14
+      ]
+    },
+    {
+      "key": "jump-double",
+      "frame": 5,
+      "duration": 99.0,
+      "sourceFrameIndices": [
+        15,
+        16,
+        17
+      ]
+    },
+    {
+      "key": "jump-double",
+      "frame": 6,
+      "duration": 66.0,
+      "sourceFrameIndices": [
+        18,
+        19
+      ]
+    }
+  ]
+}

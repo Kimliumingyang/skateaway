@@ -15,6 +15,8 @@ export const PLATFORM_ITEMS = {
   "sign-neon": { width: 280, height: 280 * 124 / 259 },
 } as const;
 export const PICKUP_ITEMS = { rocket: { width: 68 * 154 / 136, height: 68 } } as const;
+/** Platform separation stays independent from the denser base coin grid. */
+export const OPTIONAL_ROUTE_SPACING = 300;
 export type HazardType = keyof typeof HAZARDS;
 export type PlatformItemType = keyof typeof PLATFORM_ITEMS;
 export type LevelItemType = "coin" | HazardType | PlatformItemType | "rocket";
@@ -22,7 +24,7 @@ export interface LevelItemSpawn {
   x: number;
   y: number;
   type: LevelItemType;
-  /** Optional platforms carry extra coin clusters above the 300px base route. */
+  /** Optional platforms carry extra coin clusters above the base coin route. */
   bonus?: boolean;
   route?: "aircon-step" | "billboard-high";
 }
@@ -42,7 +44,7 @@ export function layoutHazards(roof: Roof, index: number, speed: number, elapsed?
   const entry = encounterAt(roof, elapsed);
   const difficulty = difficultyAt(entry);
   const margin = Math.max(250, speed * 0.85);
-  const spacing = Math.ceil(Math.max(700, speed * difficulty.hazardInterval) / COIN_SPACING) * COIN_SPACING;
+  const spacing = Math.ceil(Math.max(600, speed * difficulty.hazardInterval) / COIN_SPACING) * COIN_SPACING;
   const start = index === 0 ? Math.max(roof.x + margin, PLAYER_SCREEN_X + speed * 1.8) : roof.x + margin;
   const end = roof.x + roof.w - margin;
   // Two optional routes reserve the complete base route and their reunion area.
@@ -77,16 +79,17 @@ export function gapRoute(from: Roof, to: Roof, speed: number) {
 export function layoutOptionalPlatforms(roof: Roof, index: number, speed: number, elapsed?: number): LevelItemSpawn[] {
   const entry = encounterAt(roof, elapsed);
   if (roof.chunk !== "C07" || roof.w < 1250 || entry < 15 || difficultyAt(entry).recovery) return [];
-  const margin = Math.max(260, speed * 0.62);
-  // The upper route has its own 300px cadence, centered over the safe base roof.
-  const firstCenter = roof.x + (roof.w - COIN_SPACING) / 2;
+  // A 250px drop takes 0.43s; retain another 0.15s before the roof edge.
+  const margin = Math.max(260, speed * 0.58);
+  // The upper route retains its reachable platform geometry as the coin grid changes.
+  const firstCenter = roof.x + (roof.w - OPTIONAL_ROUTE_SPACING) / 2;
   // Offset the route rotation with the director wave so relief windows do not
   // repeatedly remove the same route variant from a run.
   const high = entry >= 20 && (Math.floor(index / 4) + Math.floor(entry / 14)) % 2 === 0;
   const route = high ? "billboard-high" : "aircon-step";
   const types: PlatformItemType[] = high ? ["sign-cyber", "sign-neon"] : ["aircon", "sign-cyber"];
   const rises = high ? [235, 250] : [130, 140];
-  const platforms: (LevelItemSpawn & { type: PlatformItemType })[] = types.map((type, i) => ({ x: firstCenter + i * COIN_SPACING, y: roof.y - rises[i], type, route }));
+  const platforms: (LevelItemSpawn & { type: PlatformItemType })[] = types.map((type, i) => ({ x: firstCenter + i * OPTIONAL_ROUTE_SPACING, y: roof.y - rises[i], type, route }));
   // A speed boost may end anywhere: reserve a full drop back onto the base roof.
   const end = platforms.at(-1)!;
   if (firstCenter - PLATFORM_ITEMS[platforms[0].type].width / 2 < roof.x + margin ||

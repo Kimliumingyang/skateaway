@@ -31,6 +31,7 @@ interface PlatformView {
   roof: Roof;
   art: Phaser.GameObjects.Image;
   ledge: Phaser.GameObjects.Rectangle;
+  billboard: Phaser.GameObjects.Image;
 }
 interface Item {
   x: number;
@@ -203,7 +204,13 @@ export class GameScene extends Phaser.Scene {
       .setOrigin(0, 0)
       .setDepth(3)
       .setVisible(true);
-    this.roofs.push({ roof, art: im, ledge });
+    // Supplied signs decorate the facade; their art does not add a collision surface.
+    const sign = roof.kind === 2 ? "hotel" : roof.kind === 6 ? "deep-earth" : "yidd";
+    const billboard = (recycled?.billboard ?? this.add.image(0, 0, sign))
+      .setTexture(sign).setDepth(3).setVisible(true);
+    billboard.setScale(Math.min(135 / billboard.height, roof.w * 0.68 / billboard.width));
+    billboard.setPosition(roof.x + roof.w * 0.38, roof.y + 100 + billboard.displayHeight / 2);
+    this.roofs.push({ roof, art: im, ledge, billboard });
     this.roofModels.push(roof);
     // Plan a roof once its outgoing jump destination is known, ahead of the camera.
     for (const spawn of previous ? layoutRoofItems(
@@ -277,9 +284,9 @@ export class GameScene extends Phaser.Scene {
     this.player.pose(this.motion.grounded, this.motion.vy, this.tick * 1000,
       this.trickStarted < 0 ? -1 : this.tick - this.trickStarted);
     this.trickButton.setAlpha(!this.motion.grounded && !this.tricks.pending && this.stumbleRemaining <= 0 && !this.rocketFlying ? 1 : 0.55);
-    this.player.bodyArt.setAlpha(this.graceRemaining > 0 ? 0.55 + Math.sin(this.tick * 35) * 0.25 : 1);
-    this.player.bodyArt.setTint(this.rocketFlying ? 0xffdd85 : 0xffffff);
-    if (this.stumbleRemaining > 0) this.player.bodyArt.rotation += Math.sin(this.tick * 40) * 0.16;
+    this.player.activeArt.setAlpha(this.graceRemaining > 0 ? 0.55 + Math.sin(this.tick * 35) * 0.25 : 1);
+    this.player.activeArt.setTint(this.rocketFlying ? 0xffdd85 : 0xffffff);
+    if (this.stumbleRemaining > 0) this.player.activeArt.rotation += Math.sin(this.tick * 40) * 0.16;
     this.missionHud.setText(this.missions.summary.join("    ·    "));
     this.statusHud.setText(this.rocketFlying ? this.rocketRemaining > 0 ? `ROCKET ${Math.ceil(this.rocketRemaining)}s` : "ROCKET · SAFE LANDING" :
       this.stumbleRemaining > 0 ? "OFF BALANCE · TRICK LOCKED" :
@@ -332,6 +339,7 @@ export class GameScene extends Phaser.Scene {
     const landed = !wasGrounded && this.motion.grounded;
     if (this.motion.grounded) this.lastSupport = this.supportAt(supports);
     if (event) {
+      if (event === "jump" && !this.rocketFlying) this.player.beginJump(this.motion.jumps);
       audio.tone(event === "jump" ? "jump" : "land");
       this.burst(
         this.motion.x,
@@ -346,6 +354,7 @@ export class GameScene extends Phaser.Scene {
       this.roofModels.shift();
       p.art.setVisible(false);
       p.ledge.setVisible(false);
+      p.billboard.setVisible(false);
       this.roofPool.push(p);
     }
     for (const item of this.items) {
