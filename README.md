@@ -2,9 +2,9 @@
 
 A playable HTML5 rooftop skateboarding game built with Phaser 3, TypeScript and Vite. The logical canvas is **1920×1080**, with proportional scaling and letterboxing on desktop and mobile. Supplied source artwork stays under `Asset/`; ASCII-named runtime copies live in `public/assets/`.
 
-The current gameplay upgrade follows the two supplied design PDFs. [Gameplay decisions and delivery status](docs/GAMEPLAY_SPEC_RECONCILIATION.md) distinguish the intended scope, missing assets and verified implementation. The feature implementation is complete: 38 unit tests, 22 distinct browser scenarios and the production build pass. Preview deployment is pending. Earlier session reports are retained in [docs/archive](docs/archive/README.md).
+The current gameplay upgrade follows the two supplied design PDFs. [Gameplay decisions and delivery status](docs/GAMEPLAY_SPEC_RECONCILIATION.md) distinguish the intended scope, missing assets and verified implementation. The feature implementation is complete: 38 unit tests, 22 distinct browser scenarios and the production build pass. [GitHub Pages deployment](https://github.com/Kimliumingyang/skateaway/actions/runs/42430236024) succeeded for the gameplay build. Earlier session reports are retained in [docs/archive](docs/archive/README.md).
 
-Prepared preview address: https://kimliumingyang.github.io/skateaway/preview/?v=gameplay-docs-20261108 — deployment pending; this address is not yet confirmed to contain the current build.
+Playable preview: https://kimliumingyang.github.io/skateaway/preview/?v=gameplay-docs-20261108
 
 ## Run
 
@@ -55,3 +55,5 @@ Available catalog art includes buildings, two standable signs, an air conditione
 Coin revives (300 coins), real rewarded advertising, Star effects, online ranking services and a full cosmetic shop are deferred. Rocket uses the supplied pickup art for three seconds of boosted flight (+30% speed), followed by safe landing and 0.8 seconds of protection. Local rankings and the supplied music work independently of those services. Actual iOS / Android hardware, audio behavior and longer-term balance require device playtests.
 
 To regenerate the original runtime copies and [dimension table](docs/ASSET_DIMENSIONS.md), install Python Pillow and run `python scripts/assets.py`. It preserves original source artwork, does not extract `Asset.zip` and leaves the maintained asset manifest / provenance notes unchanged.
+
+Chinese upload checklist: [待补素材与上传说明](docs/MISSING_ASSETS.zh-CN.md).
