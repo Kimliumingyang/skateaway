@@ -2,7 +2,7 @@
 
 This document reconciles the two attached product references: **《SkateAway · 霓虹屋顶滑板跑酷》完整游戏策划案** (gameplay GDD) and **《SkateAway 滑板小子》** (items, pacing and economy; dated August 8, 2026). Both PDFs were read in full. Values are initial design targets subject to playtesting. Historical development reports live in [archive](archive/README.md).
 
-Status: the implemented feature scope below is complete. 38 unit tests, 22 distinct browser scenarios, `npm run check` and the relative-path production build pass. [GitHub Pages deployment](https://github.com/Kimliumingyang/skateaway/actions/runs/42430236024) succeeded for the gameplay build.
+Status: the previous gameplay scope below was delivered. The follow-up [asset refresh](ASSET_REFRESH.md) is in progress: jump animations and faster/denser pacing are implemented; four inline-only images still require downloadable originals. The following validation record describes the previous release. 38 unit tests, 22 distinct browser scenarios, `npm run check` and the relative-path production build pass. [GitHub Pages deployment](https://github.com/Kimliumingyang/skateaway/actions/runs/42430236024) succeeded for the gameplay build.
 
 ## Decisions where documents differ
 
@@ -31,10 +31,10 @@ The rows below describe this release's code scope, rather than every goal in the
 | Combo | ×1 / ×1.5 / ×2 / ×3 / ×4 at the selected event thresholds; expires after six active seconds; pause freezes its timer. Plain landings preserve it. Bumps, death and restart clear the streak. |
 | Score / currency | `floor(distance / 10) + coins × 10 + banked style`. Combo multiplies style only. Each coin is one currency unit; collected coins and completed mission bonuses settle once on death. Retry is free. |
 | Chunk patterns | Asset-ready C01–C07 pattern tags compose flat runs, small gaps, cone jumps, raised roofs, double gaps, coin arcs and high routes. C08 is explicitly unavailable because Steam Vent art is missing. These are bounded rooftop patterns, not eight separate authored maps. |
-| Optional routes | Two variants use supplied aircon / cyber sign / neon sign platforms over a clear main roof. Each variant adds six upper-route bonus coins, arranged around the two platform centers at −80 / 0 / +80px. The base 300px coin grid stays unchanged; the return area is reserved. |
+| Optional routes | Two variants use supplied aircon / cyber sign / neon sign platforms over a clear main roof. Each variant adds six upper-route bonus coins, arranged around the two platform centers at −80 / 0 / +80px. The current base 240px coin grid is independent of upper-platform spacing; the return area is reserved. |
 | Reachability | Gap limits use current speed, gravity, jump and roof rise. Generated roofs reserve landing / takeoff space. Optional upper routes preserve the main roof and avoid hazard-filled merges. Generation and route tests are required before release. |
 | Hazards | Cone / box / banana are nonlethal and break Combo. Banana also locks tricks for 0.6s. Caution signs, cracks, building facades and falls remain lethal. No flying / steam / drone hazards ship without their art. |
-| Difficulty | Learn 0–20s, Flow 20–45s, Pressure 45–75s, Danger 75–120s, Survival 120s+. Normal speed caps at 150%. Current minimum hazard spacing is tuned conservatively for the Full HD geometry: 3.6 / 2.8 / 2.3 / 1.9 / 1.6 seconds. |
+| Difficulty | Learn 0–20s, Flow 20–45s, Pressure 45–75s, Danger 75–120s, Survival 120s+. Normal speed caps at 150%. Current minimum hazard spacing is tuned conservatively for the Full HD geometry: 3 / 2.3 / 1.8 / 1.5 / 1.3 seconds. |
 | Recovery | A 2.5s lower-pressure beat starts at 12s and repeats every 14s; hazard placement reserves its approach and landing. Short roofs and optional-route roofs stay clear. |
 | Missions | Two visible goals per run selected from collect 30 coins (+30), survive 60s (+60) and land five Kickflips (+50). Finalize the bonus once; show it separately in results. |
 | Rocket | Existing pickup art gives three seconds of boosted flight at +30% speed. If the timer ends over a gap, flight continues to a safe rooftop; descent then has 0.8s protection. No Star sprite / shield / magnet is claimed. |
@@ -73,9 +73,9 @@ Do not quietly replace these with unrelated supplied sprites, crop a menu to imp
 
 | Priority | Required art / sound | Scope affected |
 |---|---|---|
-| P0 character polish | Genuine skate / run, jump, double-jump, landing and Kickflip transparent frames or atlas, with frame timing / anchors | Current single-frame character uses procedural motion. Impact crash already has supplied animation. |
+| P0 character polish | Genuine skate / run, landing and Kickflip transparent frames or atlas, with frame timing / anchors | Skate / landing / Kickflip still use procedural motion. First jump, double-jump and impact crash now have supplied animations. |
 | Item catalog | Star, candy and brick-stack sprites | Energy stone, coin and box are different objects. Candy gameplay remains TBD in the document. |
-| Flying hazards | Balloon and bird animation / sprites, warning / flight audio | Both are absent; movement code alone cannot satisfy supplied-art integration. |
+| Flying hazards | Balloon and bird animation / sprites, warning / flight audio | Both were shown inline in chat; downloadable original files are still needed before integration. Movement code alone cannot satisfy supplied-art integration. |
 | Power-up feedback | Star shield / magnet visuals and activation / expiry SFX; rocket boost trail / activation / expiry feedback | Rocket pickup image exists; no supplied effect overlays or associated audio are present. |
 | C08 / dynamic hazards | Steam vent, pre-warning mist / active steam art and sound | C08's exact visual content cannot ship from the current art set. |
 | Later hazards | Drone, electrical wire / arc, swinging sign states and warnings | GDD dynamic / lethal catalog expansion. |

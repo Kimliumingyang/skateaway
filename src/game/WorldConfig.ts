@@ -5,9 +5,9 @@ export const PLAYER_SCREEN_X = 220;
 /** Full-HD composition: small skater, clear forward view, grounded buildings. */
 export const PLAYER_HEIGHT = 180;
 export const PLAYER_BODY_HEIGHT = PLAYER_HEIGHT * 0.8;
-export const COIN_SPACING = 300;
+export const COIN_SPACING = 240;
 export const COIN_FOOT_OFFSET = 74;
-export const BASE_RUN_SPEED = 380;
+export const BASE_RUN_SPEED = 430;
 export const MAX_RUN_SPEED = BASE_RUN_SPEED * 1.5;
 export const START_ROOF_Y = 720;
 export const HIGH_ROOF_Y = 640;

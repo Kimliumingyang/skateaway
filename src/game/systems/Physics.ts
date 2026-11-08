@@ -32,11 +32,11 @@ export function isRecoveryAt(seconds: number) {
 export function difficultyAt(seconds: number): Difficulty {
   const t = Math.max(0, Number.isFinite(seconds) ? seconds : 0);
   const recovery = isRecoveryAt(t);
-  if (t < 20) return { tier: "Learn", level: 1, speedMultiplier: 1, hazardInterval: 3.6, recovery };
-  if (t < 45) return { tier: "Flow", level: 2, speedMultiplier: 1.05 + (t - 20) / 25 * 0.05, hazardInterval: 2.8, recovery };
-  if (t < 75) return { tier: "Pressure", level: 3, speedMultiplier: 1.15 + (t - 45) / 30 * 0.1, hazardInterval: 2.3, recovery };
-  if (t < 120) return { tier: "Danger", level: 4, speedMultiplier: 1.3 + (t - 75) / 45 * 0.15, hazardInterval: 1.9, recovery };
-  return { tier: "Survival", level: 5, speedMultiplier: 1.5, hazardInterval: 1.6, recovery };
+  if (t < 20) return { tier: "Learn", level: 1, speedMultiplier: 1, hazardInterval: 3, recovery };
+  if (t < 45) return { tier: "Flow", level: 2, speedMultiplier: 1.05 + (t - 20) / 25 * 0.05, hazardInterval: 2.3, recovery };
+  if (t < 75) return { tier: "Pressure", level: 3, speedMultiplier: 1.15 + (t - 45) / 30 * 0.1, hazardInterval: 1.8, recovery };
+  if (t < 120) return { tier: "Danger", level: 4, speedMultiplier: 1.3 + (t - 75) / 45 * 0.15, hazardInterval: 1.5, recovery };
+  return { tier: "Survival", level: 5, speedMultiplier: 1.5, hazardInterval: 1.3, recovery };
 }
 export interface Roof {
   x: number;
@@ -139,7 +139,8 @@ export class PlatformGenerator {
     let chunk: ChunkId;
     if (difficulty.recovery) chunk = w >= 1250 ? "C01" : "C02";
     else if (w >= 1250) {
-      chunk = encounter >= 15 && Math.floor(this.index / 4) % 3 !== 0 ? "C07" : "C03";
+      // One optional route per three long roofs leaves more authored hazard beats.
+      chunk = encounter >= 15 && Math.floor(this.index / 4) % 3 === 1 ? "C07" : "C03";
     } else if (difficulty.level === 1) chunk = "C02";
     else chunk = (["C04", "C05", "C06"] as const)[this.index % 3];
     if (chunk === "C04" && y !== HIGH_ROOF_Y) chunk = "C06";

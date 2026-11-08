@@ -33,7 +33,7 @@ for (const viewport of [{ width: 1334, height: 750 }, { width: 844, height: 390 
     expect(opening.width).toBeLessThanOrEqual(180);
     expect(opening.coins.length).toBeGreaterThan(5);
     for (let i = 1; i < opening.coins.length; i++)
-      expect(opening.coins[i] - opening.coins[i - 1]).toBeCloseTo(300);
+      expect(opening.coins[i] - opening.coins[i - 1]).toBeCloseTo(240);
     await page.waitForFunction(() => (window as any).skateaway.scene.getScene("Game").coins > 0);
     await page.keyboard.press("Space");
     await page.waitForTimeout(90);

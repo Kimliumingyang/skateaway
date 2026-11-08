@@ -75,7 +75,8 @@ test("10,000 generated roofs remain conservative and have reaction room", () => 
       (JUMP + Math.sqrt(JUMP * JUMP - 2 * GRAVITY * Math.max(0, rise))) /
       GRAVITY;
     assert.ok(gap <= speed * t * 0.45 + 0.00001);
-    assert.ok(n.w / speed > 0.6);
+    // Short, hazard-free high roofs still offer over half a second at the new cap.
+    assert.ok(n.w / speed > 0.55);
     assert.ok(n.y >= 640 && n.y <= 720);
     p = n;
   }
@@ -155,8 +156,11 @@ test("elapsed director uses five tiers, finite speed and recurring recovery", ()
   assert.equal(speedAt(0, 0), BASE_RUN_SPEED);
   assert.equal(speedAt(999999, 19.9), BASE_RUN_SPEED);
   assert.equal(speedAt(0, 120), MAX_RUN_SPEED);
-  assert.equal(speedAt(1e9, 1e6), 570);
+  assert.equal(speedAt(1e9, 1e6), MAX_RUN_SPEED);
+  assert.equal(BASE_RUN_SPEED, 430);
+  assert.equal(MAX_RUN_SPEED, 645);
   const samples = [0, 20, 45, 75, 120].map(difficultyAt);
+  assert.deepEqual(samples.map(sample => sample.hazardInterval), [3, 2.3, 1.8, 1.5, 1.3]);
   for (let i = 1; i < samples.length; i++) {
     assert.ok(samples[i].speedMultiplier > samples[i - 1].speedMultiplier);
     assert.ok(samples[i].hazardInterval < samples[i - 1].hazardInterval);
@@ -190,8 +194,8 @@ test("named chunks exclude missing steam and rockets have a 25-second cooldown",
 });
 
 test("roofs planned at early speed remain reachable after acceleration or rocket expiry", () => {
-  for (const planningSpeed of [380, 570, 741]) {
-    for (const actualSpeed of [380, 570, 741]) {
+  for (const planningSpeed of [BASE_RUN_SPEED, MAX_RUN_SPEED, MAX_RUN_SPEED * 1.3]) {
+    for (const actualSpeed of [BASE_RUN_SPEED, MAX_RUN_SPEED, MAX_RUN_SPEED * 1.3]) {
       const generator = new PlatformGenerator(() => 1);
       let current = { x: 0, y: 720, w: deckWidth(720, 2), kind: 2 };
       for (let i = 0; i < 20; i++) {
@@ -211,4 +215,25 @@ test("roofs planned at early speed remain reachable after acceleration or rocket
       }
     }
   }
+});
+
+test("long roofs rotate two hazard beats for each optional route without removing recovery", () => {
+  const generator = new PlatformGenerator(() => 0.5);
+  let current: import("../src/game/systems/Physics.ts").Roof = {
+    x: -100, y: 720, w: deckWidth(720, 1), kind: 1,
+  };
+  const eligible: import("../src/game/systems/Physics.ts").Roof[] = [];
+  for (let i = 0; i < 120; i++) {
+    current = generator.next(current, speedAt(0, current.elapsed ?? 0));
+    if (current.w < 1250 || current.elapsed! < 15) continue;
+    if (isRecoveryAt(current.elapsed!)) {
+      assert.equal(current.chunk, "C01");
+      continue;
+    }
+    eligible.push(current);
+    assert.equal(current.chunk, Math.floor(generator.index / 4) % 3 === 1 ? "C07" : "C03");
+  }
+  assert.ok(eligible.filter(roof => roof.chunk === "C03").length >
+    eligible.filter(roof => roof.chunk === "C07").length);
+  assert.ok(eligible.some(roof => roof.chunk === "C07"));
 });
