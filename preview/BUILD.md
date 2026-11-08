@@ -1,5 +1,6 @@
-SkateAway asset refresh preview
-Source: feat/skateaway-asset-refresh c2b45e2
+SkateAway 2.1 gameplay preview
+Source: feat/skateaway-v2-1 20ca3cd
 Build: npm run build -- --base=./
-Playable URL: https://kimliumingyang.github.io/skateaway/preview/?v=asset-refresh-1
-Includes supplied first and double jump animations, faster pacing, denser coins and hazards, and original billboard art. New homepage character, star, balloon and seagull source files are pending.
+Playable URL: https://kimliumingyang.github.io/skateaway/preview/?v=2-1-20ca3cd
+Includes the authored ten-building lesson, Rookie Challenges, run missions, supplied double-jump/seagull/balloon animation, balloon bounce, independent records, and preserved original art.
+Validation: npm run check; 25 browser tests passed.
