@@ -1,5 +1,7 @@
 # Gameplay 2.0 — specification decisions and delivery status
 
+> This file records the earlier 2.0 baseline. The uploaded 2.1 brief is implemented as a follow-up on `feat/skateaway-v2-1`; see [V2_1_IMPLEMENTATION.md](V2_1_IMPLEMENTATION.md) for the new building director, challenges and supplied animation integration. Earlier missing-art notes below refer to the 2.0 release.
+
 This document reconciles the two attached product references: **《SkateAway · 霓虹屋顶滑板跑酷》完整游戏策划案** (gameplay GDD) and **《SkateAway 滑板小子》** (items, pacing and economy; dated August 8, 2026). Both PDFs were read in full. Values are initial design targets subject to playtesting. Historical development reports live in [archive](archive/README.md).
 
 Status: the previous gameplay scope below was delivered. The follow-up [asset refresh](ASSET_REFRESH.md) is in progress: jump animations and faster/denser pacing are implemented; four inline-only images still require downloadable originals. The following validation record describes the previous release. 38 unit tests, 22 distinct browser scenarios, `npm run check` and the relative-path production build pass. [GitHub Pages deployment](https://github.com/Kimliumingyang/skateaway/actions/runs/42430236024) succeeded for the gameplay build.

@@ -69,7 +69,7 @@ export class MenuScene extends Phaser.Scene {
         name: "play",
       },
     );
-    const open = (mode: "settings" | "ranking") => {
+    const open = (mode: "settings" | "ranking" | "challenges") => {
       this.scene.launch("Overlay", { mode, origin: "Menu" });
       this.scene.pause();
     };
@@ -85,18 +85,21 @@ export class MenuScene extends Phaser.Scene {
       fontSize: 30,
       name: "ranking",
     });
+    graffitiButton(this, 930, 623, "STREET CHALLENGES", () => open("challenges"), 405, {
+      icon: "crown", height: 62, fontSize: 25, name: "challenges",
+    });
     label(
       this,
       930,
-      617,
-      `BEST ${save.data.best.toLocaleString()}   ·   BANK ${save.data.wallet.toLocaleString()} COINS`,
+      673,
+      `BEST ${save.data.best.toLocaleString()}   ·   BANK ${save.data.wallet.toLocaleString()} COINS   ·   ROOKIE ${save.data.rookieCompleted.length}/7`,
       23,
       "#edc9f2",
     );
     label(
       this,
       878,
-      697,
+      724,
       "TAP / SPACE TO JUMP  ·  TWICE TO DOUBLE JUMP",
       18,
       "#ba91d0",

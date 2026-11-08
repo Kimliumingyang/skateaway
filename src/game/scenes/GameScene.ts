@@ -27,6 +27,9 @@ import { save } from "../systems/SaveManager";
 import { audio } from "../systems/AudioManager";
 import { TrickCombo } from "../systems/TrickCombo";
 import { RunMissions } from "../systems/RunMissions";
+import { StreetInteractions } from "../systems/StreetInteractions";
+import { RookieChallenges, type RookieEvent } from "../systems/RookieChallenges";
+import { type LegendMetric, type LegendId } from "../systems/StreetLegends";
 interface PlatformView {
   roof: Roof;
   art: Phaser.GameObjects.Image;
@@ -68,12 +71,28 @@ export class GameScene extends Phaser.Scene {
   trickButton!: Phaser.GameObjects.Container;
   hintUntil = 0;
   missionHud!: Phaser.GameObjects.Text;
+  rookieHud!: Phaser.GameObjects.Text;
   statusHud!: Phaser.GameObjects.Text;
   tutorial!: Phaser.GameObjects.Text;
   missions = new RunMissions();
-  runSequence = 0;
+  missionNotified = new Set<string>();
   successfulTricks = 0;
+  gapsCleared = 0;
+  consecutiveGaps = 0;
+  cleanBuildings = 0;
+  buildingsPassed = 0;
+  landedBuilding5 = 0;
+  openingComplete = 0;
+  newLegendsThisRun: LegendId[] = [];
+  newRookiesThisRun: string[] = [];
+  doubleJumps = 0;
+  highPlatforms = 0;
+  lastHighPlatform?: Roof;
+  lastPassedOrder = -1;
+  doubledFromRoof2 = false;
+  rookie = new RookieChallenges();
   missionBonus = 0;
+  rookieBonus = 0;
   stumbleRemaining = 0;
   graceRemaining = 0;
   rocketRemaining = 0;
@@ -81,6 +100,8 @@ export class GameScene extends Phaser.Scene {
   takeoffRoof?: Roof;
   lastSupport?: Roof;
   deathReason = "";
+  deathCause: "FALL" | "OBSTACLE" | "SEAGULL" | "ELECTRIC" | "OTHER" = "OTHER";
+  interactions!: StreetInteractions;
   constructor() {
     super("Game");
   }
@@ -102,13 +123,26 @@ export class GameScene extends Phaser.Scene {
     this.tricks = new TrickCombo();
     this.trickStarted = -1;
     this.hintUntil = 0;
-    this.missions = new RunMissions(save.data.records.length + this.runSequence++);
+    this.missions = new RunMissions(save.startRun());
+    this.missionNotified = new Set();
     this.successfulTricks = 0;
+    this.gapsCleared = this.doubleJumps = this.highPlatforms = 0;
+    this.consecutiveGaps = this.cleanBuildings = this.buildingsPassed = 0;
+    this.landedBuilding5 = this.openingComplete = 0;
+    this.newLegendsThisRun = [];
+    this.newRookiesThisRun = [];
+    this.lastHighPlatform = undefined;
+    this.lastPassedOrder = -1;
+    this.doubledFromRoof2 = false;
     this.missionBonus = 0;
+    this.rookieBonus = 0;
     this.stumbleRemaining = this.graceRemaining = this.rocketRemaining = 0;
     this.rocketFlying = false;
     this.takeoffRoof = this.lastSupport = undefined;
     this.deathReason = "";
+    this.deathCause = "OTHER";
+    this.interactions = new StreetInteractions(this);
+    this.events.once("shutdown", () => this.interactions.clear());
     this.sky = this.add
       .tileSprite(0, 0, WIDTH, HEIGHT, "sky")
       .setOrigin(0)
@@ -136,12 +170,15 @@ export class GameScene extends Phaser.Scene {
       "#e6cdf8",
     ).setDepth(20);
     this.addRoof({ x: -100, y: START_ROOF_Y, w: deckWidth(START_ROOF_Y, 1), kind: 1,
+      order: 0,
       elapsed: (-100 - this.motion.x) / speedAt(0, 0) });
     this.populateUntil(WIDTH + 800);
     this.player = new Player(this);
     this.trickHint = marker(this, 300, 190, "", 30).setDepth(21)
       .setStroke("#28113c", 4);
     this.missionHud = label(this, WIDTH / 2 - 100, HEIGHT - 82, "", 24, "#efd5f4").setDepth(21)
+      .setStroke("#28113c", 3);
+    this.rookieHud = label(this, WIDTH / 2, 107, "", 24, "#eeff42").setDepth(21)
       .setStroke("#28113c", 3);
     this.statusHud = label(this, WIDTH - 370, 130, "", 24, "#eeff42").setDepth(21)
       .setStroke("#28113c", 3);
@@ -212,6 +249,7 @@ export class GameScene extends Phaser.Scene {
     billboard.setPosition(roof.x + roof.w * 0.38, roof.y + 100 + billboard.displayHeight / 2);
     this.roofs.push({ roof, art: im, ledge, billboard });
     this.roofModels.push(roof);
+    this.interactions.spawn(roof, this.generator.index);
     // Plan a roof once its outgoing jump destination is known, ahead of the camera.
     for (const spawn of previous ? layoutRoofItems(
       previous,
@@ -220,10 +258,10 @@ export class GameScene extends Phaser.Scene {
       { previous: beforePrevious, next: roof,
         elapsed: this.tick + Math.max(0, (previous.x - this.motion.x) / speedAt(this.distance, this.tick)) },
     ) : []) {
-      this.addItem(spawn.x, spawn.y, spawn.type);
+      this.addItem(spawn.x, spawn.y, spawn.type, previous?.order);
     }
   }
-  addItem(x: number, y: number, type: Item["type"]) {
+  addItem(x: number, y: number, type: Item["type"], order?: number) {
     const sprite = (this.pool.pop() ?? this.add.image(0, 0, type))
       .setTexture(type)
       .setPosition(x, y)
@@ -238,7 +276,7 @@ export class GameScene extends Phaser.Scene {
     else if (type in PLATFORM_ITEMS) {
       const size = PLATFORM_ITEMS[type as keyof typeof PLATFORM_ITEMS];
       sprite.setDisplaySize(size.width, size.height).setY(y + size.height);
-      item.model = { x: x - size.width / 2, y, w: size.width, kind: 0 };
+      item.model = { x: x - size.width / 2, y, w: size.width, kind: 0, order };
     } else {
       const size = HAZARDS[type as keyof typeof HAZARDS];
       sprite.setScale(size.height / sprite.height);
@@ -288,6 +326,7 @@ export class GameScene extends Phaser.Scene {
     this.player.activeArt.setTint(this.rocketFlying ? 0xffdd85 : 0xffffff);
     if (this.stumbleRemaining > 0) this.player.activeArt.rotation += Math.sin(this.tick * 40) * 0.16;
     this.missionHud.setText(this.missions.summary.join("    ·    "));
+    this.rookieHud.setText(this.rookie.current ? `ROOKIE ${this.rookie.progress + 1}/7 · ${this.rookie.current.title}` : "ROOKIE CHALLENGES COMPLETE");
     this.statusHud.setText(this.rocketFlying ? this.rocketRemaining > 0 ? `ROCKET ${Math.ceil(this.rocketRemaining)}s` : "ROCKET · SAFE LANDING" :
       this.stumbleRemaining > 0 ? "OFF BALANCE · TRICK LOCKED" :
       this.tricks.combo > 0 ? `COMBO ×${this.tricks.multiplier} · ${this.tricks.remaining.toFixed(1)}s` : "");
@@ -338,8 +377,17 @@ export class GameScene extends Phaser.Scene {
     }
     const landed = !wasGrounded && this.motion.grounded;
     if (this.motion.grounded) this.lastSupport = this.supportAt(supports);
+    if (this.motion.grounded && this.lastSupport?.kind === 0 && this.lastHighPlatform !== this.lastSupport) {
+      this.highPlatforms++;
+      this.lastHighPlatform = this.lastSupport;
+      this.rookieEvent({ type: "high", order: this.lastSupport.order ?? -1 });
+    }
     if (event) {
       if (event === "jump" && !this.rocketFlying) this.player.beginJump(this.motion.jumps);
+      if (event === "jump" && this.motion.jumps === 2) this.doubleJumps++;
+      if (event === "jump" && this.motion.jumps === 2) this.legendEvent("doubles");
+      if (event === "jump" && this.motion.jumps === 2 && this.takeoffRoof?.order === 1)
+        this.doubledFromRoof2 = true;
       audio.tone(event === "jump" ? "jump" : "land");
       this.burst(
         this.motion.x,
@@ -349,6 +397,30 @@ export class GameScene extends Phaser.Scene {
     }
     this.updateScore();
     this.populateUntil(this.motion.x + WIDTH + 800);
+    for (const roof of this.roofModels) {
+      if ((roof.order ?? -1) > this.lastPassedOrder && this.motion.x >= roof.x + roof.w) {
+        this.lastPassedOrder = roof.order ?? -1;
+        if (this.lastPassedOrder >= 1) {
+          this.buildingsPassed++;
+          this.cleanBuildings++;
+          this.legendEvent("buildings");
+          if (this.cleanBuildings >= 10 && !save.data.legendUnlocked.noFear) this.legendEvent("flawless");
+        }
+        if (this.lastPassedOrder === 9) this.openingComplete = 1;
+        this.rookieEvent({ type: "pass", order: this.lastPassedOrder });
+      }
+    }
+    this.interactions.step(dt, this.motion, speed, () => {
+      if (!this.dead && !this.rocketFlying && this.graceRemaining <= 0)
+        this.die("impact", "HIT A SILLY SEAGULL", "SEAGULL");
+    }, (x, y) => {
+      this.motion.vy = -920 * 1.15;
+      this.motion.grounded = false;
+      this.styleHint("BALLOON BOUNCE!");
+      this.burst(x, y, 0xffd75e);
+      audio.tone("jump");
+    });
+    if (this.dead) return;
     while (this.roofs[0]?.roof.x + this.roofs[0].roof.w < this.motion.x - 600) {
       const p = this.roofs.shift()!;
       this.roofModels.shift();
@@ -366,6 +438,7 @@ export class GameScene extends Phaser.Scene {
           item.sprite.setVisible(false);
           if (item.type === "coin") {
             this.coins++;
+            this.legendEvent("coins");
             audio.tone("coin");
             this.burst(item.x, item.y, 0xeeff42);
           } else {
@@ -386,6 +459,7 @@ export class GameScene extends Phaser.Scene {
           item.active = false;
           item.sprite.setVisible(false);
           this.tricks.crash();
+          this.consecutiveGaps = this.cleanBuildings = 0;
           this.trickStarted = -1;
           this.graceRemaining = 0.7;
           this.stumbleRemaining = item.type === "banana" ? 0.6 : 0.25;
@@ -426,21 +500,54 @@ export class GameScene extends Phaser.Scene {
     if (!this.dead && landed) {
       const didTrick = this.tricks.pending;
       const award = this.tricks.land();
-      if (didTrick && award) this.successfulTricks++;
+      if (didTrick && award) { this.successfulTricks++; this.legendEvent("tricks"); }
       this.trickStarted = -1;
       const support = this.lastSupport;
       const ratio = support ? (this.motion.x - support.x) / support.w : -1;
       const crossedGap = support && this.takeoffRoof && support !== this.takeoffRoof &&
         this.takeoffRoof.x + this.takeoffRoof.w < support.x;
+      if (crossedGap) { this.gapsCleared++; this.consecutiveGaps++; this.legendEvent("gaps"); }
+      if (support?.order === 4 && support.kind !== 0) this.landedBuilding5 = 1;
+      if (crossedGap && support?.kind !== 0) this.rookieEvent({ type: "land", order: support?.order ?? -1,
+        doubleJump: this.doubledFromRoof2 });
+      this.doubledFromRoof2 = false;
       const clean = crossedGap && ratio >= 0.2 && ratio <= 0.55 && this.graceRemaining <= 0 ? this.tricks.award(50) : 0;
       if (award || clean) this.styleHint(`${award ? `KICKFLIP +${award}` : ""}${clean ? `  CLEAN LANDING +${clean}` : ""}\nCOMBO ×${this.tricks.multiplier}`);
       this.takeoffRoof = undefined;
     }
-    this.missions.update(this.coins, this.tick, this.successfulTricks);
+    if (this.tick >= 120 && !save.data.legendUnlocked.nightRider) this.legendEvent("survive120");
+    this.updateMissions();
     this.updateScore();
   }
   updateScore() {
     this.score = Math.floor(this.distance / 10) + this.coins * 10 + this.tricks.points;
+  }
+  updateMissions() {
+    this.missions.update({ coins: this.coins, seconds: this.tick, gaps: this.gapsCleared,
+      doubles: this.doubleJumps, tricks: this.successfulTricks, high: this.highPlatforms,
+      consecutiveGaps: this.consecutiveGaps, cleanBuildings: this.cleanBuildings,
+      buildings: this.buildingsPassed, landedBuilding5: this.landedBuilding5,
+      openingComplete: this.openingComplete });
+    if (!this.dead) for (const mission of this.missions.missions) {
+      if (mission.complete && !this.missionNotified.has(mission.id)) {
+        this.missionNotified.add(mission.id);
+        this.styleHint(`MISSION COMPLETE! · ${mission.title}\n+${mission.reward} COINS`);
+      }
+    }
+  }
+  rookieEvent(event: RookieEvent) {
+    const award = this.rookie.observe(event);
+    if (award) {
+      this.newRookiesThisRun.push(award.id);
+      this.styleHint(`CHALLENGE COMPLETE! · ${award.title}\n+${award.reward} COINS`);
+    }
+  }
+  legendEvent(metric: LegendMetric) {
+    const unlocked = save.recordLegend(metric);
+    for (const legend of unlocked) {
+      this.newLegendsThisRun.push(legend.id);
+      this.styleHint(`STREET LEGEND UNLOCKED! · ${legend.title}`);
+    }
   }
   supportAt(supports: Roof[], x = this.motion.x) {
     return supports.find(roof => x + 18 > roof.x && x - 18 < roof.x + roof.w && Math.abs(this.motion.y - roof.y) < 2);
@@ -449,22 +556,34 @@ export class GameScene extends Phaser.Scene {
     this.trickHint.setText(text);
     this.hintUntil = this.tick + 1.8;
   }
-  die(reason: "impact" | "fall" = "impact", explanation = "COLLISION") {
+  die(reason: "impact" | "fall" = "impact", explanation = "COLLISION",
+      cause: "FALL" | "OBSTACLE" | "SEAGULL" | "ELECTRIC" | "OTHER" = reason === "fall" ? "FALL" : "OBSTACLE") {
     if (this.dead) return;
     this.dead = true;
     this.deathReason = explanation;
-    this.missions.update(this.coins, this.tick, this.successfulTricks);
+    this.deathCause = cause;
+    this.interactions.clear();
+    this.updateMissions();
     this.missionBonus = this.missions.settle();
+    this.rookieBonus = save.data.pendingRookieBonus;
     this.tricks.crash();
     this.trickStarted = -1;
     this.trickHint.setText("");
     this.updateScore();
+    const distance = Math.floor(this.distance / 10);
+    const newRecords = [
+      this.score > save.data.best ? "BEST SCORE" : "",
+      distance > save.data.bestDistance ? "BEST DISTANCE" : "",
+      this.tick > save.data.longestRun ? "LONGEST RUN" : "",
+      this.tricks.bestMultiplier > save.data.bestCombo ? "BEST COMBO" : "",
+    ].filter(Boolean);
     audio.tone("death");
     if (save.data.vibration) navigator.vibrate?.(80);
     this.cameras.main.shake(180, 0.009);
     this.burst(this.motion.x, this.motion.y - 65, 0xff3dbf);
-    save.finish(this.score, this.coins, { distance: Math.floor(this.distance / 10),
-      maxCombo: this.tricks.bestMultiplier, bonus: this.missionBonus, seconds: this.tick });
+    save.finish(this.score, this.coins, { distance,
+      maxCombo: this.tricks.bestMultiplier, bonus: this.missionBonus, seconds: this.tick,
+      rookieBonus: this.rookieBonus, deathCause: this.deathCause });
     const showReplay = () => {
       this.scene.launch("Overlay", {
         mode: "over",
@@ -472,6 +591,13 @@ export class GameScene extends Phaser.Scene {
         score: this.score,
         coins: this.coins,
         bonus: this.missionBonus,
+        rookieBonus: this.rookieBonus,
+        missionSummary: this.missions.summary,
+        missionResults: this.missions.missions.map(({ id, title, progress, target, reward, complete }) =>
+          ({ id, title, progress, target, reward, complete })),
+        newRecords,
+        newLegends: [...this.newLegendsThisRun],
+        newRookies: [...this.newRookiesThisRun],
         maxCombo: this.tricks.bestMultiplier,
         reason: this.deathReason,
       });

@@ -31,10 +31,11 @@ async function artState(page: Page) {
       starts: g.jumpAnimationStarts,
       body: g.player.bodyArt.visible,
       jump: g.player.jumpArt.visible,
+      double: g.player.doubleArt.visible,
       crash: g.player.crashArt.visible,
-      playing: g.player.jumpArt.anims.isPlaying,
-      animation: g.player.jumpArt.anims.currentAnim?.key ?? null,
-      active: g.player.activeArt === g.player.jumpArt ? "jump" : "body",
+      playing: g.player.activeArt.anims?.isPlaying ?? false,
+      animation: g.player.activeArt.anims?.currentAnim?.key ?? null,
+      active: g.player.activeArt === g.player.doubleArt ? "double" : g.player.activeArt === g.player.jumpArt ? "jump" : "body",
     };
   });
 }
@@ -75,11 +76,12 @@ for (const viewport of [{ width: 1440, height: 900 }, { width: 844, height: 390 
       Object.assign(g.motion, { x: 240, y: 720, vy: 0, jumps: 0, grounded: true, buffer: 0 });
       g.jumpAnimationStarts = [];
       g.player.jumpArt.on("animationstart", (animation: any) => g.jumpAnimationStarts.push(animation.key));
+      g.player.doubleArt.on("animationstart", (animation: any) => g.jumpAnimationStarts.push(animation.key));
       g.update(0, 0);
       return decorations;
     });
 
-    expect(decorations).toEqual({ textures: ["yidd", "hotel", "deep-earth"],
+    expect(decorations).toEqual({ textures: ["yidd", "hotel", "yidd"],
       visible: true, supportsUnchanged: true, separateFromItems: true });
 
     expect(await artState(page)).toMatchObject({ jumps: 0, grounded: true,
@@ -96,20 +98,20 @@ for (const viewport of [{ width: 1440, height: 900 }, { width: 844, height: 390 
     await jump(page, touch);
     await step(page);
     expect(await artState(page)).toMatchObject({ jumps: 2, grounded: false,
-      starts: ["jump-first", "jump-double"], body: false, jump: true,
-      playing: true, animation: "jump-double", active: "jump" });
+      starts: ["jump-first", "jump-double-v21"], body: false, jump: false, double: true,
+      playing: true, animation: "jump-double-v21", active: "double" });
     await jump(page, touch);
     await step(page, 30);
     expect(await artState(page)).toMatchObject({ jumps: 2, grounded: false,
-      starts: ["jump-first", "jump-double"], animation: "jump-double" });
+      starts: ["jump-first", "jump-double-v21"], animation: "jump-double-v21" });
     await page.screenshot({ path: `work/jump-double-${viewport.width}.png` });
 
-    await page.waitForFunction(() => !(window as any).skateaway.scene.getScene("Game").player.jumpArt.anims.isPlaying);
+    await page.waitForFunction(() => !(window as any).skateaway.scene.getScene("Game").player.doubleArt.anims.isPlaying);
     expect(await artState(page)).toMatchObject({ grounded: false, body: false,
-      jump: true, playing: false, starts: ["jump-first", "jump-double"] });
+      double: true, playing: false, starts: ["jump-first", "jump-double-v21"] });
     await step(page, 150);
     expect(await artState(page)).toMatchObject({ jumps: 0, grounded: true,
-      starts: ["jump-first", "jump-double"], body: true, jump: false,
+      starts: ["jump-first", "jump-double-v21"], body: true, jump: false, double: false,
       crash: false, playing: false, active: "body" });
 
     await jump(page, touch);
@@ -121,7 +123,7 @@ for (const viewport of [{ width: 1440, height: 900 }, { width: 844, height: 390 
     await step(page);
     expect(await artState(page)).toMatchObject({ dead: true, body: false,
       jump: false, crash: true, playing: false,
-      starts: ["jump-first", "jump-double", "jump-first"] });
+      starts: ["jump-first", "jump-double-v21", "jump-first"] });
     await page.waitForFunction(() => (window as any).skateaway.scene.isActive("Overlay"));
     await clickUI(page, "Overlay", "retry");
     await page.waitForFunction(() => (window as any).skateaway.scene.isActive("Game"));

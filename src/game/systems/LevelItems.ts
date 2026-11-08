@@ -78,6 +78,14 @@ export function gapRoute(from: Roof, to: Roof, speed: number) {
 /** Two one-way routes sit above a fully clear main roof. Neither is required. */
 export function layoutOptionalPlatforms(roof: Roof, index: number, speed: number, elapsed?: number): LevelItemSpawn[] {
   const entry = encounterAt(roof, elapsed);
+  if ((index === 1 && roof.kind === 2) || (index === 2 && roof.kind === 4)) {
+    const type: PlatformItemType = index === 1 ? "sign-cyber" : "aircon";
+    const x = roof.x + roof.w * 0.52;
+    const y = roof.y - (index === 1 ? 120 : 105);
+    return [{ x, y, type, route: index === 1 ? "billboard-high" : "aircon-step" },
+      ...[-75, 0, 75].map(offset => ({ x: x + offset, y: y - COIN_FOOT_OFFSET,
+        type: "coin" as const, bonus: true }))];
+  }
   if (roof.chunk !== "C07" || roof.w < 1250 || entry < 15 || difficultyAt(entry).recovery) return [];
   // A 250px drop takes 0.43s; retain another 0.15s before the roof edge.
   const margin = Math.max(260, speed * 0.58);

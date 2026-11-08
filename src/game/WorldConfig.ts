@@ -20,8 +20,11 @@ export const DECKS: Record<
   1: { width: 4400, top: 150, height: 583 },
   2: { width: 1950, top: 150, height: 667 },
   3: { width: 950, top: 285, height: 867 },
+  4: { width: 1150, top: 150, height: 986 },
+  5: { width: 440, top: 85, height: 1007 },
   6: { width: 700, top: 130, height: 938 },
   7: { width: 1465, top: 10, height: 744 },
+  8: { width: 620, top: 95, height: 1147 },
 };
 export function deckScale(y: number, kind: number) {
   const d = DECKS[kind];

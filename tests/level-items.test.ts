@@ -168,7 +168,7 @@ test("a generated first minute offers both route templates, with safe teaching b
     const platforms = layoutOptionalPlatforms(roof, generator.index, speed);
     for (const platform of platforms.filter(item => item.type in PLATFORM_ITEMS)) {
       routes.add(platform.route!);
-      if (roof.elapsed! < 20) assert.equal(platform.route, "aircon-step");
+      if (roof.elapsed! < 20 && roof.order !== 1) assert.equal(platform.route, "aircon-step");
     }
   }
   assert.deepEqual([...routes].sort(), ["aircon-step", "billboard-high"]);

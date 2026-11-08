@@ -4,6 +4,7 @@ import { PLAYER_HEIGHT } from "../WorldConfig";
 export class Player extends Phaser.GameObjects.Container {
   bodyArt: Phaser.GameObjects.Image;
   jumpArt: Phaser.GameObjects.Sprite;
+  doubleArt: Phaser.GameObjects.Sprite;
   crashArt: Phaser.GameObjects.Sprite;
   constructor(scene: Phaser.Scene) {
     super(scene, 240, 440);
@@ -19,6 +20,9 @@ export class Player extends Phaser.GameObjects.Container {
       .setOrigin(jump.originX, jump.originY)
       .setScale(PLAYER_HEIGHT / jump.referenceHeight).setVisible(false);
     this.add(this.jumpArt);
+    this.doubleArt = scene.add.sprite(0, 0, "jump-double-v21", 0)
+      .setOrigin(0.5, 1).setScale(PLAYER_HEIGHT / 480).setVisible(false);
+    this.add(this.doubleArt);
     const crash = scene.cache.json.get("crash-data");
     // The atlas's standing pose was packed at 324px; match the skating pose's new height.
     const crashScale = PLAYER_HEIGHT / 324;
@@ -28,17 +32,20 @@ export class Player extends Phaser.GameObjects.Container {
   }
   /** Lets grace / Rocket / stumble feedback follow the visible character. */
   get activeArt(): Phaser.GameObjects.Image | Phaser.GameObjects.Sprite {
-    return this.jumpArt.visible ? this.jumpArt : this.bodyArt;
+    return this.doubleArt.visible ? this.doubleArt : this.jumpArt.visible ? this.jumpArt : this.bodyArt;
   }
   /** Called for an accepted physics jump only; playback never moves the player. */
   beginJump(jumpNumber: number) {
     if (this.crashArt.visible || (jumpNumber !== 1 && jumpNumber !== 2)) return;
     this.bodyArt.setVisible(false);
-    this.jumpArt.setVisible(true);
-    this.jumpArt.play(jumpNumber === 1 ? "jump-first" : "jump-double");
+    this.jumpArt.stop().setVisible(jumpNumber === 1);
+    this.doubleArt.stop().setVisible(jumpNumber === 2);
+    if (jumpNumber === 1) this.jumpArt.play("jump-first");
+    else this.doubleArt.play("jump-double-v21");
   }
   playCrash(onComplete: () => void) {
     this.jumpArt.stop().setVisible(false);
+    this.doubleArt.stop().setVisible(false);
     this.bodyArt.setVisible(false);
     this.crashArt.setVisible(true);
     this.crashArt.once(Phaser.Animations.Events.ANIMATION_COMPLETE, onComplete);
@@ -46,8 +53,9 @@ export class Player extends Phaser.GameObjects.Container {
   }
   pose(grounded: boolean, vy: number, time: number, trickElapsed = -1) {
     if (this.crashArt.visible) return;
-    if (grounded && this.jumpArt.visible) {
+    if (grounded && (this.jumpArt.visible || this.doubleArt.visible)) {
       this.jumpArt.stop().setVisible(false);
+      this.doubleArt.stop().setVisible(false);
       this.bodyArt.setVisible(true);
     }
     const art = this.activeArt;

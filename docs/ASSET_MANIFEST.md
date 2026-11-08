@@ -6,7 +6,15 @@ The current logical canvas is 1920×1080. Building images keep their source aspe
 
 `Cyan Kickflip` is the selected supplied looping soundtrack. Two other source tracks remain available. Coin feedback includes the generated WAV described below; other movement / collision feedback uses synthesis. Supplied revive artwork has a baked-in advertising badge and cost; current revive rules and actual implementation status are tracked in the [gameplay reconciliation](GAMEPLAY_SPEC_RECONCILIATION.md). An image is not proof of an advertising integration.
 
-Current missing sprites and effects are listed in the [missing asset table](GAMEPLAY_SPEC_RECONCILIATION.md#missing-assets). In particular, `gem.png` is an energy stone, not Star art; `rocket.png` is present. Bird, balloon, candy, star, brick stack and specialist hazard art are absent. Existing live graffiti UI uses scalable graphics and self-hosted fonts as documented below.
+Current missing sprites and effects are listed in the [missing asset table](GAMEPLAY_SPEC_RECONCILIATION.md#missing-assets). In particular, `gem.png` is an energy stone, not Star art; `rocket.png` is present. Candy, star, brick stack and specialist hazard art are absent. The v2.1 upload supplies new transparent bird, balloon and second-jump frames; see the runtime table below. Existing live graffiti UI uses scalable graphics and self-hosted fonts as documented below.
+
+| v2.1 uploaded source | Runtime strips | Frame assumptions |
+|---|---|---|
+| `SkateAway_Silly_Seagull_Transparent_SpriteFrames.zip` | `seagull-{fly,idle,squawk,hit,fall,disappear}.png` | 192×192 transparent frames, 8/4/4/4/4/3 frames; supplied JSON frame timing |
+| `SkateAway_Cat_Balloon_Codex_Ready.zip` | `balloon-{idle,bob,shake,pop}.png` | 192×192 transparent frames, five each; supplied JSON rates 6/7/11/9 fps |
+| `SkateAway_DoubleJump_Codex_Ready.zip` | `jump-double-v21.png` | 4×2 sheet, 362×543 per frame, 12 fps once; physics hitbox remains separate |
+
+Only the required strips/sheet were read from the new ZIPs. `scripts/import_v21_assets.py` records the exact transformation; it does not touch the original `Asset.zip`.
 
 | Source | Runtime | Dimensions | Alpha range | RGBA memory MiB |
 |---|---|---|---|---|
